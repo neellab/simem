@@ -67,6 +67,7 @@ header {
   position: relative;
   padding: 15px 20px;
   border-bottom: 1px solid #B2D2E1;
+  text-align: center;
 }
 header h1 {
   margin: 0;
@@ -75,6 +76,7 @@ header h1 {
   line-height: 1.2;
   color: #069;
   text-shadow: rgba(255, 255, 255, 0.9) 0 1px 0;
+  text-align: center;
 }
 header.without-description h1 {
   margin: 10px 0;
