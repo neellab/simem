@@ -1,0 +1,145 @@
+Two-Class Differential Essentiality Analysis
+-------------------------------------------------------------
+
+
+First [download the simem R code](https://github.com/neellab/simem/tree/master/R). 
+&nbsp;
+Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
+
+```{r load_code}
+
+### To install required packages, uncomment and run this
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite(c("Biobase", "preprocessCore", "genefilter"))
+# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+
+suppressPackageStartupMessages(library("Biobase"))
+suppressPackageStartupMessages(library("blme"))
+suppressPackageStartupMessages(library("doMC"))
+suppressPackageStartupMessages(library("genefilter"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("locfit"))
+suppressPackageStartupMessages(library("MASS"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("preprocessCore"))
+suppressPackageStartupMessages(library("reshape"))
+
+
+source("../../R/data_format_lib.R")
+source("../../R/model_lib.R")
+source("../../R/simem_lib.R")
+```
+&nbsp;
+
+The screen data formatted as an `ExpressionSet`, including measurement weights, can be downloaded [here](https://www.dropbox.com/s/dp278iu9kle98fy/breast_screens_with_weights.eset?dl=1).
+
+```{r load_screen_data}
+
+load("../../data/shrna/breast_screens_with_weights.eset")
+breast_screens
+```
+&nbsp;
+
+The reagent annotation table we're about to load, including the `weight` column which will be used to exclude some reagents, can be downloaded [here](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+
+```{r load_hp_annotations}
+hp = read.delim("../../data/annotations/hairpin_annotations.txt", header=T, as.is=T, check.names=F)
+hpWeights = hp[,c("trcn_id", "gene_id", "weight")]
+```
+&nbsp;
+
+The breast cell line subtypes table detailing the classes we want to compare for differential essentiality can be downloaded [here](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/cell_line_subtypes.txt.zip?raw=true).
+
+```{r load_subtypes}
+subtypes = read.delim("../../data/annotations/cell_line_subtypes.txt", header=T, as.is=T, check.names=F)
+status = subtypes[,c("cell_line", "subtype_neve")]
+```
+&nbsp;
+
+Once the subtypes table is loaded, we want to reduce the 4 subtype Neve classification into 2 classes: "her2" and "other". 
+
+```{r create_covariate}
+status$erbb2 = ifelse(status$subtype_neve == "her2", "her2", "other")
+```
+&nbsp;
+
+Based on the above data frame, two parameters must be specified in the `simem()` function: `covariate = "erbb2"` and `annotationsPerCellLine = status`.
+
+&nbsp;
+
+By default, the analysis uses the first variable by alphabetical order as the baseline. In this case, we want to determine whether a gene is a context-dependent essential in her2+ cell lines compared to all other subtypes as baseline, so we'll specify the following parameter in the `simem()` function: `covariateFactorOrder = c("other", "her2")`.
+
+&nbsp;
+
+For the purposes of this example, to reduce computation time, we'll perform the analysis for known positives highlighted in the manuscript
+
+```{r specify_ids}
+signalingPathway = c(207,   #AKT1
+                    11140, #CDC37
+                    2064,  #ERBB2
+                    55914, #ERBB2IP
+                    2065,  #ERBB3
+                    2475,  #MTOR
+                    5290,  #PIK3CA
+                    6009,  #RHEB
+                    25803, #SPDEF
+                    7022) #TFAP2C
+```
+&nbsp;
+
+If we want to perform a genome-wide analysis, simply omit the `geneIds = signalingPathway` parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 6 processor cores, for example, specify the `parallelNodes = 6` parameter. This option is only available on Linux or OS X at present.
+
+&nbsp;
+
+If we specify an analysis using both precision and signal-noise measurement weights (`inverseVarianceWeights = TRUE` and `signalProbWeights = TRUE` parameters, respectively), we must ensure that we've added these weights to the `ExpressionSet` beforehand ([detailed here](https://github.com/neellab/simem/blob/master/documentation/markdown/weights_precision.html)).
+
+&nbsp;
+
+Combining all the above, we're ready to perform the differential essentiality analysis.
+
+```{r simem}
+
+results = simem(screens = breast_screens,
+                geneIds = signalingPathway,
+                covariate = "erbb2",
+                reagentWeights = hpWeights,
+                annotationsPerCellLine = status,
+                inverseVarianceWeights = TRUE,
+                signalProbWeights = TRUE,
+                analyzeReagents = TRUE,
+                covariateFactorOrder = c("other", "her2"), 
+                parallelNodes = 1
+                )
+```
+&nbsp;
+
+Most users will be interested in the summarized per-gene context-specific essentiality predictions
+
+```{r show_gene}
+options(width=100)
+
+results$gene
+```
+&nbsp;
+
+If you want to examine more parameters for each gene, including model fit statistics, std. errors and such, examine the "gene_detailed" data frame.
+
+```{r show_gene_detailed}
+str(results$gene_detailed)
+```
+&nbsp;
+
+If the `analyzeReagents = TRUE` parameter was specified, per-reagent context-specific essentiality predictions are also available in both summarized
+
+```{r show_reagent}
+options(width=100)
+reagent = results$reagent
+reagent[order(reagent$symbol, reagent$trcn_id), ]
+```
+&nbsp;
+
+and detailed versions.
+
+```{r show_reagent_detailed}
+str(results$reagent_detailed)
+```
