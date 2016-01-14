@@ -50,39 +50,15 @@
 <br>
 <br>
 <h3>
-<a id="functional-genomics-and-proteomics-data-files" class="anchor" href="#functional-genomics-and-proteomics-data-files" aria-hidden="true"><span class="octicon octicon-link"></span></a>Functional, Genomics and Proteomics Data Files</h3>
-
-<p><strong>shRNA screens</strong></p>
+<a id="tutorial" class="anchor" href="#tutorial" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tutorial</h3>
 
 <ul>
-<li>
-<strong><a href="https://www.dropbox.com/s/a16l4thfeu9u206/breast_screens.eset?dl=1">Normalized ExpressionSet</a></strong>: File used in manuscript analyses. RData format file containing a <code>Bioconductor ExpressionSet</code> object combining
-
-<ul>
-<li>Loaded into R using the <code>load()</code> function.</li>
-<li>Per-sample (cell line + time-point + replicate), per-hairpin log2 measurements matrix. Accessed using the <code>exprs()</code> R function.</li>
-<li>Per-hairpin, per-gene annotations data frame, with the same number of rows as the measurement matrix. Accessed using the <code>fData()</code> R function.</li>
-<li>Per sample annotation data frame, including information such as cell line and time-point. This number of rows in this data frame matches the number of columns in the measurements matrix. Accessed using the <code>pData()</code> R function.</li>
-</ul>
-</li>
+<li><a href="https://http://neellab.github.io/simem/format_data.html">Format Data</a></li>
+<li><a href="https://http://neellab.github.io/simem/weights_precision.html">Assign Precision Weights to Measurements</a></li>
+<li><a href="https://http://neellab.github.io/simem/two_class_analysis.html">Perform a 2 Class Differential Essentiality Analysis</a></li>
 </ul>
 
-<p><strong>RNASeq</strong></p>
-
-<ul>
-<li><strong><a href="http://RNASEQ">Per-gene log2 FPKM</a></strong></li>
-<li>
-<strong><a href="https://github.com/neellab/bfg/blob/gh-pages/data/rnaseq/breast_rnaseq_qn.txt.zip?raw=true">Per-gene normalized log2 FPKM</a></strong>: As above, but also Quantile-Normalized, and a floor value set at log2(0.1) FPKM. This version was used in the manuscript analyses.</li>
-</ul>
-
-<p><strong>CNA</strong></p>
-
-<ul>
-<li><strong><a href="https://github.com/neellab/bfg/blob/gh-pages/data/cna/breast_cna_lrr.txt.zip?raw=true">Per-gene Log-R Ratios</a></strong>:
-CBS-segmented SNP array Log R-Ratios, mapped to genes.
-</li>
-</ul>
-
+(In Progress...)
 
 <br>
 <br>
