@@ -1,0 +1,57 @@
+Formatting Screen Data for Analysis
+-------------------------------------------------------------
+
+&nbsp;
+-
+Pooled screen measurements are highly structured. Each measurement is associated with a specific gene, reagent (siRNA pool, shRNA, gRNA), cell line, replicate and/or time-point. To manage the measurements and extensive annotations, we bundle them all in a Bioconductor ExpressionSet object. Before detailing the formatting process, here are links to pre-formatted and normalized ExpressionSets for several published, large-scale pooled screens:
+
+* [Marcotte et al. 2016](http://www.cell.com/cell/current)'s 77 breast screens [ExpressionSet RData file](http://neellab.github.io/bfg/gh-pages/)
+* [Cowley et al. 2014](http://www.pnas.org/content/108/30/12372.short)'s 216 multi-cancer screens [ExpressionSet RData file](http://www.google.com). Also see the extensive resources at the Broad Institute's [Project Achilles](https://www.broadinstitute.org/achilles) website.
+* [Cheung et al. 2011](http://www.pnas.org/content/108/30/12372.short)'s 102 multi-cancer screens [ExpressionSet RData file](http://www.google.com). Also see the extensive resources at the Broad Institute's [Project Achilles](https://www.broadinstitute.org/achilles) website.
+
+&nbsp;
+
+Here's what that looks like for the breast screens:
+
+```{r load_breast}
+```
+
+```
+# To install Bioconductor packages Biobase and preprocessCore, uncomment:
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite()
+
+suppressPackageStartupMessages(library(Biobase))
+library(preprocessCore)
+library(ggplot2)
+
+measurements = read.delim("../../data/breast_measurements.txt", header=T, as.is=T, check.names=F)
+reagents = read.delim("../../data/breast_reagents.txt", header=T, as.is=T, check.names=F)
+samples = read.delim("../../data/breast_samples.txt", header=T, as.is=T, check.names=F)
+
+# Sanity check that the sample names match between measurements matrix and sample information data frame
+table(colnames(measurements) == samples$sample_id, useNA="always")
+rownames(samples) = samples$sample_id
+
+
+# It's important to ensure that the measurements matrix and reagents information data frame have the same reagent ordering (reagents$trcn_id in this case)
+
+rownames(reagents) = reagents$trcn_id
+rownames(measurements) = reagents$trcn_id
+
+reagentsADF = new("AnnotatedDataFrame", reagents)
+samplesADF = new("AnnotatedDataFrame", samples)
+
+# Create a mew ExpressionSet combining and linking measurements, reagent information and sample information
+screens = new("ExpressionSet",
+              exprs=measurements,
+              featureData=reagentsADF,
+              phenoData=samplesADF)
+
+dir.create("../../data/results")
+
+# Save the ExpressionSet as an RData file, suffixed with ".eset" to clarify that it contains an ExpressionSet
+# This file can subsequently be loaded into R using the load() function
+save(screens, "../../data/results/breast_screens.eset")
+```
+

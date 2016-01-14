@@ -1,0 +1,28 @@
+Package: siMEM
+Title: Prediction of differential gene essentiality from pooled phenotypic screens
+        (eg: siRNA, shRNA, CRISPR/Cas9 screens) using linear mixed effect models.
+Version: 1
+Authors@R: person("Azin", "Sayad", email = "asayad@gmail.com", role = c("aut", "cre"))
+Description: The siMEM (si/shRNA Interference Mixed Effects Model) algorithm predicts
+        differential essentiality from pooled phenotypic screens. Such screens typically
+        have multiple reagents (e.g., shRNAs, gRNAs) targeting each gene, and are
+        performed across multiple, genetically heterogeneous, cell lines/samples.
+        The algorithm is detailed in Marcotte et al. 2016 ("The Functional Genomic
+        Landscape of Human Breast Cancer Drivers, Vulnerabilities and Resistances.").
+        Pooled screen data formatted for use with the siMEM algorithm can be found
+        at http://neellab.github.io/bfg.
+Imports:
+        Biobase,
+        genefilter,
+        preprocessCore,
+        blme (== 1.0-1),
+        doMC,
+        foreach,
+        ggplot2,
+        lme4 (== 1.1-5),
+        locfit,
+        MASS,
+        plyr,
+        reshape
+License: MIT
+LazyData: true

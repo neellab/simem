@@ -1,0 +1,182 @@
+Calculating Precision Weights for Screens
+-------------------------------------------------------------
+
+&nbsp;
+
+Calculating precision weights first requires that screen data and annotations be combined in a `Bioconductor ExpressionSet` object. It also requires that the `replicate_group` column be set in the `phenoData` slot of the `ExpressionSet`. 
+
+&nbsp;
+
+Here's what that looks like for the [breast screens ExpressionSet](http://www.google.com):
+
+```{r load_breast}
+
+### To install required packages, uncomment and run this
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite(c("Biobase", "preprocessCore", "genefilter"))
+# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+
+suppressPackageStartupMessages(library("Biobase"))
+suppressPackageStartupMessages(library("preprocessCore"))
+suppressPackageStartupMessages(library("locfit"))
+suppressPackageStartupMessages(library("blme"))
+suppressPackageStartupMessages(library("reshape"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("genefilter"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("MASS"))
+suppressPackageStartupMessages(library("doMC"))
+
+source("../../R/data_format_lib.R")
+source("../../R/model_lib.R")
+source("../../R/simem_lib.R")
+
+load("../../data/shrna/breast_screens.eset")
+phenoBreast = pData(breast_screens)
+# The 'phenoBreast$replicate_group' column needs to be present for the mean-variance function calculation. Since the Breast screens are measured at 3 time-points, we group the screens by both cell line and time-points for the purposes of calculating the mean-variance function
+table(phenoBreast$replicate_group)[1:21]
+```
+
+
+&nbsp;
+
+Here's the same grouping for the [Achilles screens ExpressionSet](http://www.google.com):
+
+```{r load_achilles}
+load("../../data/shrna/achilles_screens.eset")
+phenoAchilles = pData(achilles_screens)
+# The 'phenoAchilles$replicate_group' column needs to be present for the mean-variance function calculation. Since the Achilles screens are measured at an end-point, we group the screens by cell line for the purposes of calculating the mean-variance function
+table(phenoAchilles$replicate_group)[1:21]
+```
+
+
+&nbsp;
+
+Once the screens are loaded, the precision (mean-variance) weights are calculated for the measurements using the 
+
+```
+simem::addPrecisionWeights()
+```
+
+as follows:
+
+```{r precision_breast}
+# Calculate the precision weights by grouping samples using the values in the 'phenoBreast$replicate_group' column. This process takes several minutes. The 'printProgress=TRUE' parameter prints a line of output for each 'replicate_group' as it is processed; printProgress=FALSE by default.
+breast_screens = addPrecisionWeights(breast_screens, printProgress=FALSE)
+
+# Save the ExpressionSet with added weights so that the calculation doesn't need to be rerun
+# save(breast_screens, file="../../data/breast_screens_with_weights.eset")
+```
+
+
+&nbsp;
+
+Here's the mean-variance calculation for the Achilles data:
+
+```{r precision_achilles}
+# Calculate the precision weights by grouping samples using the values in the 'phenoBreast$replicate_group' column. This process takes several minutes. The 'printProgress=TRUE' parameter prints a line of output for each 'replicate_group', and is set to FALSE by default.
+achilles_screens = addPrecisionWeights(achilles_screens, printProgress=FALSE)
+
+# Save the ExpressionSet with added weights
+# save(achilles_screens, file="../../data/achilles_screens_with_weights.eset")
+```
+
+&nbsp;
+
+The calculated group means, variances and smoothed mean-variance function can be accessed and plotted for the breast data. MCF7 T0, T1 and T2 values are plotted below - notice how the sqrt variance increases as time increases as a result of the independent evolution of the replicates after T0:
+
+```{r plot_precision_breast, fig.width=6, fig.height=4, fig.align="center"}
+
+meansBr = assayData(breast_screens)[["groupMeans"]]
+varsBr = assayData(breast_screens)[["groupVars"]]
+# calculate 1/precision weights to get the smoothed variance function for plotting purposes
+smoothedBr = 1/assayData(breast_screens)[["varWeights"]]
+
+# The matrices have the samples in the same order, and the values for replicates a, b, and c are identical, so we need only plot one of the replicates for each of the time-points
+mcfT0 = grep("mcf7_t0_a", colnames(meansBr))
+mcfT1 = grep("mcf7_t1_a", colnames(meansBr))
+mcfT2 = grep("mcf7_t2_a", colnames(meansBr))
+
+# Create a data frame with values to be visualized, using the MCF7 screen as an example
+plotDatT0 = cbind.data.frame(means=meansBr[,mcfT0], vars=varsBr[,mcfT0], smoothed=smoothedBr[,mcfT0])
+plotDatT1 = cbind.data.frame(means=meansBr[,mcfT1], vars=varsBr[,mcfT1], smoothed=smoothedBr[,mcfT1])
+plotDatT2 = cbind.data.frame(means=meansBr[,mcfT2], vars=varsBr[,mcfT2], smoothed=smoothedBr[,mcfT2])
+
+# For T0, plot mean vs. sqrt(variance) and sqrt(smoothed variance). We plot the sqrt of the variance to highlight differences
+plT0 = ggplot(data=plotDatT0)
+plT0 = plT0 + geom_point(aes(x=means, y=sqrt(vars)), size=2)
+plT0 = plT0 + geom_line(aes(x=means, y=sqrt(smoothed)), colour="red", size=1)
+plT0 = plT0 + scale_y_continuous(limits=c(0,4))
+plT0 = plT0 + theme_bw()
+plT0 = plT0 + xlab("MCF7 T0 replicate means") 
+plT0 = plT0 + ylab("MCF7 T0 sqrt replicate variances\nand smoothed variance function")
+plT0 = plT0 + theme(axis.title.x=element_text(size=16), 
+                axis.title.y=element_text(size=16),
+                axis.text.x=element_text(size=16), 
+                axis.text.y=element_text(size=16)
+                )
+
+# For T1, plot mean vs. sqrt(variance) and sqrt(smoothed variance). We plot the sqrt of the variance to highlight differences
+plT1 = ggplot(data=plotDatT1)
+plT1 = plT1 + geom_point(aes(x=means, y=sqrt(vars)), size=2)
+plT1 = plT1 + geom_line(aes(x=means, y=sqrt(smoothed)), colour="red", size=1)
+plT1 = plT1 + scale_y_continuous(limits=c(0,4))
+plT1 = plT1 + theme_bw()
+plT1 = plT1 + xlab("MCF7 T1 replicate means") 
+plT1 = plT1 + ylab("MCF7 T1 sqrt replicate variances\nand smoothed variance function")
+plT1 = plT1 + theme(axis.title.x=element_text(size=16), 
+                axis.title.y=element_text(size=16),
+                axis.text.x=element_text(size=16), 
+                axis.text.y=element_text(size=16)
+                )
+
+# For T2, plot mean vs. sqrt(variance) and sqrt(smoothed variance). We plot the sqrt of the variance to highlight differences
+plT2 = ggplot(data=plotDatT2)
+plT2 = plT2 + geom_point(aes(x=means, y=sqrt(vars)), size=2)
+plT2 = plT2 + geom_line(aes(x=means, y=sqrt(smoothed)), colour="red", size=1)
+plT2 = plT2 + scale_y_continuous(limits=c(0,4))
+plT2 = plT2 + theme_bw()
+plT2 = plT2 + xlab("MCF7 T2 replicate means")
+plT2 = plT2 + ylab("MCF7 T2 sqrt replicate variances\nand smoothed variance function")
+plT2 = plT2 + theme(axis.title.x=element_text(size=16), 
+                axis.title.y=element_text(size=16),
+                axis.text.x=element_text(size=16), 
+                axis.text.y=element_text(size=16)
+                )
+
+plT0
+plT1
+plT2
+```
+
+&nbsp;
+
+And the plot of the smoothed mean-variance function for one of the Achilles screens follows:
+
+```{r plot_precision_achilles, fig.width=6, fig.height=4, fig.align="center"}
+
+meansAch = assayData(achilles_screens)[["groupMeans"]]
+varsAch = assayData(achilles_screens)[["groupVars"]]
+# calculate 1/precision weights to get the smoothed variance function for plotting purposes
+smoothedAch = 1/assayData(achilles_screens)[["varWeights"]]
+
+# The matrices have the samples in the same order, and the values for replicates a, b, and c are identical, so we need only plot one of the replicates
+a549 = grep("a549_a", colnames(meansAch))
+
+# Create a data frame with values to be visualized, using the MCF7 screen as an example
+plotDat = cbind.data.frame(means=meansAch[,a549], vars=varsAch[,a549], smoothed=smoothedAch[,a549])
+
+# Plot mean vs. sqrt(variance) and sqrt(smoothed variance). We plot the sqrt of the variance to highlight differences
+pl = ggplot(data=plotDat)
+pl = pl + geom_point(aes(x=means, y=sqrt(vars)), size=2)
+pl = pl + geom_line(aes(x=means, y=sqrt(smoothed)), colour="red", size=1)
+pl = pl + theme_bw()
+pl = pl + xlab("A549 replicate means") 
+pl = pl + ylab("A549 sqrt replicate variances\nand variance smoothed function")
+pl = pl + theme(axis.title.x=element_text(size=16), 
+                  axis.title.y=element_text(size=16),
+                  axis.text.x=element_text(size=16), 
+                  axis.text.y=element_text(size=16)
+                  )
+pl
+```
