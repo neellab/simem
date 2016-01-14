@@ -134,7 +134,7 @@ status = subtypes[,c(&quot;cell_line&quot;, &quot;subtype_neve&quot;)]</code></p
 <p> </p>
 <p>If we want to perform a genome-wide analysis, simply omit the <code>geneIds = signalingPathway</code> parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 6 processor cores, for example, specify the <code>parallelNodes = 6</code> parameter. This option is only available on Linux or OS X at present.</p>
 <p> </p>
-<p>If we specify an analysis using both precision and signal-noise measurement weights (<code>inverseVarianceWeights = TRUE</code> and <code>signalProbWeights = TRUE</code> parameters, respectively), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://github.com/neellab/simem/blob/master/documentation/markdown/weights_precision.html">detailed here</a>).</p>
+<p>If we specify an analysis using both precision and signal-noise measurement weights (<code>inverseVarianceWeights = TRUE</code> and <code>signalProbWeights = TRUE</code> parameters, respectively), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html">detailed here</a>).</p>
 <p> </p>
 <p>Combining all the above, we’re ready to perform the differential essentiality analysis.</p>
 <pre class="r"><code>results = simem(screens = breast_screens,
