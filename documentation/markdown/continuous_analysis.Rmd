@@ -1,5 +1,7 @@
-Essentiality Associated with Continuous (Expression) Values
+Essentiality with continuous expression: Breast CCND1 expression example
 -------------------------------------------------------------
+
+&nbsp;
 
 We previously worked through a basic 2 class differential essentiality analysis using cell line HER2+ status as an example. Here we see how to predict genes whose essentiality is associated (positively or negatively) with a continuous variable, such as RNA-Seq expression of a gene. We'll use the expression of well-known Breast oncogene CCND1 as a case study.
 
@@ -37,7 +39,7 @@ The screen data formatted as an `ExpressionSet`, including measurement weights, 
 ```{r load_screen_data}
 
 load("../../data/shrna/breast_screens_with_weights.eset")
-breast_screens
+#breast_screens
 ```
 &nbsp;
 

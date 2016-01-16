@@ -61,9 +61,12 @@ img {
 
 
 
-<div id="two-class-differential-essentiality-analysis" class="section level2">
-<h2>Two-Class Differential Essentiality Analysis</h2>
-<p>First <a href="https://github.com/neellab/simem/tree/master/R">download the simem R code</a>.   Also note that, while the code below uses relative paths, you should edit these to point to where you’ve stored the code, annotation or data files.</p>
+<div id="class-context-specific-essentiality-breast-her2-example" class="section level2">
+<h2>2 class context-specific essentiality: Breast HER2+ example</h2>
+<p> </p>
+<p>First <a href="https://github.com/neellab/simem/tree/master/R">download the simem R code</a>.</p>
+<p> </p>
+<p>Also note that, while the code below uses relative paths, you should edit these to point to where you’ve stored the code, annotation or data files.</p>
 <pre class="r"><code>### To install required packages, uncomment and run this
 # source(&quot;http://www.bioconductor.org/biocLite.R&quot;)
 # biocLite(c(&quot;Biobase&quot;, &quot;preprocessCore&quot;, &quot;genefilter&quot;))
@@ -114,7 +117,19 @@ hpWeights = hp[,c(&quot;trcn_id&quot;, &quot;gene_id&quot;, &quot;weight&quot;)]
 status = subtypes[,c(&quot;cell_line&quot;, &quot;subtype_neve&quot;)]</code></pre>
 <p> </p>
 <p>Once the subtypes table is loaded, we want to reduce the 4 subtype Neve classification into 2 classes: “her2” and “other”.</p>
-<pre class="r"><code>status$erbb2 = ifelse(status$subtype_neve == &quot;her2&quot;, &quot;her2&quot;, &quot;other&quot;)</code></pre>
+<pre class="r"><code>status$erbb2 = ifelse(status$subtype_neve == &quot;her2&quot;, &quot;her2&quot;, &quot;other&quot;)
+status[1:10,]</code></pre>
+<pre><code>##    cell_line subtype_neve erbb2
+## 1      184a1       basalb other
+## 2      184b5       basalb other
+## 3     600mpe      luminal other
+## 4      au565         her2  her2
+## 5       bt20       basala other
+## 6      bt474         her2  her2
+## 7      bt483      luminal other
+## 8      bt549       basalb other
+## 9     cal120       basalb other
+## 10    cal148      luminal other</code></pre>
 <p> </p>
 <p>Based on the above data frame, two parameters must be specified in the <code>simem()</code> function: <code>covariate = &quot;erbb2&quot;</code> and <code>annotationsPerCellLine = status</code>.</p>
 <p> </p>
@@ -134,7 +149,7 @@ status = subtypes[,c(&quot;cell_line&quot;, &quot;subtype_neve&quot;)]</code></p
 <p> </p>
 <p>If we want to perform a genome-wide analysis, simply omit the <code>geneIds = signalingPathway</code> parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 6 processor cores, for example, specify the <code>parallelNodes = 6</code> parameter. This option is only available on Linux or OS X at present.</p>
 <p> </p>
-<p>If we specify an analysis using both precision and signal-noise measurement weights (<code>inverseVarianceWeights = TRUE</code> and <code>signalProbWeights = TRUE</code> parameters, respectively), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html">detailed here</a>).</p>
+<p>If we specify an analysis using both precision and signal-noise measurement weights (<code>inverseVarianceWeights = TRUE</code> and <code>signalProbWeights = TRUE</code> parameters, respectively), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://github.com/neellab/simem/blob/master/documentation/markdown/weights_precision.html">detailed here</a>).</p>
 <p> </p>
 <p>Combining all the above, we’re ready to perform the differential essentiality analysis.</p>
 <pre class="r"><code>results = simem(screens = breast_screens,

@@ -1,9 +1,12 @@
-Two-Class Differential Essentiality Analysis
+2 class context-specific essentiality: Breast HER2+ example
 -------------------------------------------------------------
 
+&nbsp;
 
 First [download the simem R code](https://github.com/neellab/simem/tree/master/R). 
+
 &nbsp;
+
 Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
 
 ```{r load_code}
@@ -60,6 +63,7 @@ Once the subtypes table is loaded, we want to reduce the 4 subtype Neve classifi
 
 ```{r create_covariate}
 status$erbb2 = ifelse(status$subtype_neve == "her2", "her2", "other")
+status[1:10,]
 ```
 &nbsp;
 
