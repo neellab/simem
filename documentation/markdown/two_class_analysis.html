@@ -158,11 +158,15 @@ breast_screens</code></pre>
 ## experimentData: use 'experimentData(object)'
 ## Annotation:</code></pre>
 <p> </p>
-<p>The reagent annotation table we’re about to load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
+<p>The reagent annotation table we’re about to load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/annotations/hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>. <!---
+(https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+--></p>
 <pre class="r"><code>hp = read.delim(&quot;../../data/annotations/hairpin_annotations.txt&quot;, header=T, as.is=T, check.names=F)
 hpWeights = hp[,c(&quot;trcn_id&quot;, &quot;gene_id&quot;, &quot;weight&quot;)]</code></pre>
 <p> </p>
-<p>The breast cell line subtypes table detailing the classes we want to compare for differential essentiality can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/annotations/cell_line_subtypes.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
+<p>The breast cell line subtypes table detailing the classes we want to compare for differential essentiality can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/annotations/cell_line_subtypes.txt.zip?raw=true"><strong>HERE</strong></a>. <!---
+(https://github.com/neellab/bfg/blob/gh-pages/data/annotations/cell_line_subtypes.txt.zip?raw=true).
+--></p>
 <pre class="r"><code>subtypes = read.delim(&quot;../../data/annotations/cell_line_subtypes.txt&quot;, header=T, as.is=T, check.names=F)
 status = subtypes[,c(&quot;cell_line&quot;, &quot;subtype_neve&quot;)]</code></pre>
 <p> </p>

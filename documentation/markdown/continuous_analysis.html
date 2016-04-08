@@ -141,11 +141,13 @@ source(&quot;../../R/simem_lib.R&quot;)</code></pre>
 <pre class="r"><code>load(&quot;../../data/shrna/breast_screens_with_weights.eset&quot;)
 #breast_screens</code></pre>
 <p> </p>
-<p>The reagent annotation table we’re about to load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
+<p>The reagent annotation table we’re about to load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/annotations/hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>. <!---
+(https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+--></p>
 <pre class="r"><code>hp = read.delim(&quot;../../data/annotations/hairpin_annotations.txt&quot;, header=T, as.is=T, check.names=F)
 hpWeights = hp[,c(&quot;trcn_id&quot;, &quot;gene_id&quot;, &quot;weight&quot;)]</code></pre>
 <p> </p>
-<p>The breast RNA-Seq expression file, from which we’ll extract CCND1 log2-FPKM expression values, can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/rnaseq/breast_rnaseq_qn.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
+<p>The breast RNA-Seq expression file, from which we’ll extract CCND1 log2-FPKM expression values, can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/rnaseq/breast_rnaseq_qn.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
 <pre class="r"><code>options(width=100)
 
 rnaseq = read.delim(&quot;../../data/rnaseq/breast_rnaseq_qn.txt&quot;, header=T, as.is=T, check.names=F)

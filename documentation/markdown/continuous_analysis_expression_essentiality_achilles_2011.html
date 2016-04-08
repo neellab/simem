@@ -161,11 +161,11 @@ achilles_screens</code></pre>
 ## experimentData: use 'experimentData(object)'
 ## Annotation:</code></pre>
 <p> </p>
-<p>Project Achilles screens were performed using a pool of ~54000 hairpins/reagents mapping to ~12000 genes. The reagent annotation table we’ll load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/annotations/achilles_hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>. In this case, any reagents with a mean intensity measurement below 5 (on the log2 scale) in the universal T0 sample are excluded in the analysis. Furthermore, the shRNA reagents in the Achilles screens are identified using the <code>probeset_id</code> column. We’ll specify later how to alter the <code>simem()</code> function to recognize this fact, since by default <code>simem()</code> assumes reagents identified by a <code>trcn_id</code> column.</p>
+<p>Project Achilles screens were performed using a pool of ~54000 hairpins/reagents mapping to ~12000 genes. The reagent annotation table we’ll load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/annotations/achilles_hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>. In this case, any reagents with a mean intensity measurement below 5 (on the log2 scale) in the universal T0 sample are excluded in the analysis. Furthermore, the shRNA reagents in the Achilles screens are identified using the <code>probeset_id</code> column. We’ll specify later how to alter the <code>simem()</code> function to recognize this fact, since by default <code>simem()</code> assumes reagents identified by a <code>trcn_id</code> column.</p>
 <pre class="r"><code>hp = read.delim(&quot;../../data/annotations/achilles_hairpin_annotations.txt&quot;, header=T, as.is=T, check.names=F)
 hpWeights = hp[,c(&quot;probeset_id&quot;, &quot;gene_id&quot;, &quot;weight&quot;)]</code></pre>
 <p> </p>
-<p>The formatted CCLE microarray-based expression data for these genes can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/expression/ccle_achilles_expression.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
+<p>The formatted CCLE microarray-based expression data for these genes can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/expression/ccle_achilles_expression.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
 <pre class="r"><code>expr = read.delim(&quot;../../data/expression/ccle_achilles_expression.txt&quot;, header=T, as.is=T, check.names=F)
 
 # Perform the analysis for ids contained in both the expression matrix and the shRNA data.
@@ -206,7 +206,7 @@ vars$timeGroup = &quot;timepointIndex&quot;</code></pre>
 <p> </p>
 <p>If you want to perform a genome-wide analysis, simply specify the <code>geneIds = commonIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core Linux or OS X systems.</p>
 <p> </p>
-<p>Since the Achilles data is an end-point assay, we must specify the <code>endPoint=TRUE</code> parameter for the <code>simem()</code> function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (<code>inverseVarianceWeights = TRUE</code>), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://github.com/neellab/simem/blob/master/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
+<p>Since the Achilles data is an end-point assay, we must specify the <code>endPoint=TRUE</code> parameter for the <code>simem()</code> function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (<code>inverseVarianceWeights = TRUE</code>), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
 <p> </p>
 <p>We’re now ready to predict genes whose essentiality is significantly associated with expression.</p>
 <pre class="r"><code>results = simem(achilles,

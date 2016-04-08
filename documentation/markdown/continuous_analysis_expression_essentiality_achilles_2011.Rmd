@@ -47,7 +47,7 @@ achilles_screens
 ```
 &nbsp;
 
-Project Achilles screens were performed using a pool of ~54000 hairpins/reagents mapping to ~12000 genes. The reagent annotation table we'll load, including the `weight` column which will be used to exclude some reagents, can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/achilles_hairpin_annotations.txt.zip?raw=true). In this case, any reagents with a mean intensity measurement below 5 (on the log2 scale) in the universal T0 sample are excluded in the analysis. Furthermore, the shRNA reagents in the Achilles screens are identified using the `probeset_id` column. We'll specify later how to alter the `simem()` function to recognize this fact, since by default `simem()` assumes reagents identified by a `trcn_id` column.
+Project Achilles screens were performed using a pool of ~54000 hairpins/reagents mapping to ~12000 genes. The reagent annotation table we'll load, including the `weight` column which will be used to exclude some reagents, can be downloaded [__HERE__](https://github.com/neellab/simem/blob/master/data/annotations/achilles_hairpin_annotations.txt.zip?raw=true). In this case, any reagents with a mean intensity measurement below 5 (on the log2 scale) in the universal T0 sample are excluded in the analysis. Furthermore, the shRNA reagents in the Achilles screens are identified using the `probeset_id` column. We'll specify later how to alter the `simem()` function to recognize this fact, since by default `simem()` assumes reagents identified by a `trcn_id` column.
 
 ```{r load_hp_annotations}
 hp = read.delim("../../data/annotations/achilles_hairpin_annotations.txt", header=T, as.is=T, check.names=F)
@@ -55,7 +55,7 @@ hpWeights = hp[,c("probeset_id", "gene_id", "weight")]
 ```
 &nbsp;
 
-The formatted CCLE microarray-based expression data for these genes can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/expression/ccle_achilles_expression.txt.zip?raw=true).
+The formatted CCLE microarray-based expression data for these genes can be downloaded [__HERE__](https://github.com/neellab/simem/blob/master/data/expression/ccle_achilles_expression.txt.zip?raw=true).
 
 ```{r load_expression}
 

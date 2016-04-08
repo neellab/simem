@@ -43,7 +43,10 @@ breast_screens
 ```
 &nbsp;
 
-The reagent annotation table we're about to load, including the `weight` column which will be used to exclude some reagents, can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+The reagent annotation table we're about to load, including the `weight` column which will be used to exclude some reagents, can be downloaded [__HERE__](https://github.com/neellab/simem/blob/master/data/annotations/hairpin_annotations.txt.zip?raw=true).
+<!---
+(https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+-->
 
 ```{r load_hp_annotations}
 hp = read.delim("../../data/annotations/hairpin_annotations.txt", header=T, as.is=T, check.names=F)
@@ -51,7 +54,10 @@ hpWeights = hp[,c("trcn_id", "gene_id", "weight")]
 ```
 &nbsp;
 
-The breast cell line subtypes table detailing the classes we want to compare for differential essentiality can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/cell_line_subtypes.txt.zip?raw=true).
+The breast cell line subtypes table detailing the classes we want to compare for differential essentiality can be downloaded [__HERE__](https://github.com/neellab/simem/blob/master/data/annotations/cell_line_subtypes.txt.zip?raw=true).
+<!---
+(https://github.com/neellab/bfg/blob/gh-pages/data/annotations/cell_line_subtypes.txt.zip?raw=true).
+-->
 
 ```{r load_subtypes}
 subtypes = read.delim("../../data/annotations/cell_line_subtypes.txt", header=T, as.is=T, check.names=F)
