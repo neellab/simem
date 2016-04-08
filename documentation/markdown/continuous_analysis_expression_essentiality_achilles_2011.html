@@ -111,11 +111,10 @@ $(document).ready(function () {
 </div>
 
 
-<div id="essentiality-with-continuous-expression-breast-ccnd1-expression-example" class="section level2">
-<h2>Essentiality with continuous expression: Breast CCND1 expression example</h2>
+<div id="essentiality-associated-with-continuous-expression-project-achilles-cheung-et-al.-2011-per-gene-continuous-expression-vs.essentiality" class="section level2">
+<h2>Essentiality associated with continuous expression: Project Achilles (Cheung et al. 2011) per-gene continuous expression vs. essentiality</h2>
 <p> </p>
-<p>We previously worked through a basic 2 class differential essentiality analysis using cell line HER2+ status as an example. Here we see how to predict genes whose essentiality is associated (positively or negatively) with a continuous variable, such as RNA-Seq expression of a gene. We’ll use the expression of well-known Breast oncogene CCND1 as a case study.</p>
-<p>First <a href="https://github.com/neellab/simem/tree/master/R"><strong>DOWNLOAD THE SIMEM R CODE</strong></a>.   Also note that, while the code below uses relative paths, you should edit these to point to where you’ve stored the code, annotation or data files.</p>
+<p>First <a href="https://github.com/neellab/simem/tree/master/R"><strong>DOWNLOAD SIMEM R CODE</strong></a>.   Also note that, while the code below uses relative paths, you should edit these to point to where you’ve stored the code, annotation or data files.</p>
 <pre class="r"><code>### To install required packages, uncomment and run this
 # source(&quot;http://www.bioconductor.org/biocLite.R&quot;)
 # biocLite(c(&quot;Biobase&quot;, &quot;preprocessCore&quot;, &quot;genefilter&quot;))
@@ -137,123 +136,128 @@ source(&quot;../../R/data_format_lib.R&quot;)
 source(&quot;../../R/model_lib.R&quot;)
 source(&quot;../../R/simem_lib.R&quot;)</code></pre>
 <p> </p>
-<p>The screen data formatted as an <code>ExpressionSet</code>, including measurement weights, can be downloaded <a href="https://www.dropbox.com/s/dp278iu9kle98fy/breast_screens_with_weights.eset?dl=1"><strong>HERE</strong></a>.</p>
-<pre class="r"><code>load(&quot;../../data/shrna/breast_screens_with_weights.eset&quot;)
-#breast_screens</code></pre>
-<p> </p>
-<p>The reagent annotation table we’re about to load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
-<pre class="r"><code>hp = read.delim(&quot;../../data/annotations/hairpin_annotations.txt&quot;, header=T, as.is=T, check.names=F)
-hpWeights = hp[,c(&quot;trcn_id&quot;, &quot;gene_id&quot;, &quot;weight&quot;)]</code></pre>
-<p> </p>
-<p>The breast RNA-Seq expression file, from which we’ll extract CCND1 log2-FPKM expression values, can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/rnaseq/breast_rnaseq_qn.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
-<pre class="r"><code>options(width=100)
+<!---
+achilles_screens_with_weights.eset ExpressionSet is stored on and linked to from Dropbox account, under /github/simem/data/shrna/
+-->
+<p>The Cheung et al. 2011 Project Achilles screen data formatted as an <code>ExpressionSet</code>, including measurement weights, can be downloaded <a href="https://www.dropbox.com/s/qj26t8ymz24bmcl/achilles_screens_with_weights.eset?dl=1"><strong>HERE</strong></a>.</p>
+<pre class="r"><code>load(&quot;../../data/shrna/achilles_screens_with_weights.eset&quot;)
+fdat = fData(achilles_screens)
+pheno = pData(achilles_screens)
 
-rnaseq = read.delim(&quot;../../data/rnaseq/breast_rnaseq_qn.txt&quot;, header=T, as.is=T, check.names=F)
-# Get the row index for CCND1 expression
-ccnd1Index = which(rnaseq$symbol == &quot;CCND1&quot;)
-# Remove all identifier columns, and drop the columns dimension, resulting in a cell-line-named vector of log2-FPKM values
-ccnd1Expr = unlist(rnaseq[ccnd1Index,-grep(&quot;gene_id|symbol|ensembl_id&quot;, colnames(rnaseq))])
-ccnd1Expr</code></pre>
-<pre><code>##       184a1       184b5      600mpe       au565        bt20       bt474       bt483       bt549 
-##       4.845       5.481       7.756       6.255       4.346       5.855       6.853       2.300 
-##      cal120      cal148       cal51      cal851       cama1      du4475       efm19     efm192a 
-##       6.601      -1.627       6.540       5.338       7.981       2.870       7.333       7.039 
-##       evsat      hbl100     hcc1008     hcc1143     hcc1187     hcc1395     hcc1419     hcc1428 
-##       3.654       1.670       6.476       9.054       5.051       5.409       7.099       7.352 
-##     hcc1500     hcc1569     hcc1599     hcc1806     hcc1937     hcc1954      hcc202     hcc2185 
-##       9.495      -1.764       7.520       6.337       6.712       8.416       4.122       6.823 
-##     hcc2218     hcc2688     hcc3153       hcc38       hcc70      hcc712       hdqp1      hs578t 
-##       6.965       4.411       3.626       5.846       5.333       8.130       7.402       6.433 
-##       jimt1        kpl1         ly2      macls2       mb157      mcf10a      mcf12a        mcf7 
-##       6.435       7.021       7.290       6.288       7.873       4.964       4.317       8.044 
-##  mdamb134vi    mdamb157 mdamb175vii    mdamb231    mdamb330    mdamb361    mdamb415    mdamb436 
-##      10.783       4.955       8.378       6.927      10.540       6.868       8.606       5.258 
-##    mdamb453    mdamb468      mfm223         mx1       ocubm       skbr3       skbr5       skbr7 
-##       9.097       5.966       7.336       4.108       2.271       5.702       6.838       4.382 
-##      sum102     sum1315      sum149      sum159      sum185      sum190      sum225      sum229 
-##       5.812       4.665       4.266       6.623       5.341       7.542       6.844       3.509 
-##       sum44       sum52       sw527        t47d    uacc3199     uacc812     uacc893       zr751 
-##       6.577       5.705       7.586       6.412       5.646       5.615       7.171       7.696 
-##      zr7530       zr75b 
-##       7.897       7.703</code></pre>
+achilles_screens</code></pre>
+<pre><code>## ExpressionSet (storageMode: lockedEnvironment)
+## assayData: 54020 features, 389 samples 
+##   element names: exprs, groupMeans, varWeights 
+## protocolData: none
+## phenoData
+##   sampleNames: 786o_a 786o_b ... u251mg_d (389 total)
+##   varLabels: sample_id cell_line ... replicate_group (7 total)
+##   varMetadata: labelDescription
+## featureData
+##   featureNames: TRCN0000072178cA_st TRCN0000072178cB_st ...
+##     TRCN0000116697m_st (54020 total)
+##   fvarLabels: probeset_id symbol gene_id description
+##   fvarMetadata: labelDescription
+## experimentData: use 'experimentData(object)'
+## Annotation:</code></pre>
 <p> </p>
-<p>Once we have the CCND1 log2-FPKM expression values, we want to construct a data frame with 2 columns: <code>cell_line</code> as the 1st column, and a second column to contain the expression values, which we’ll creatively name <code>ccnd1</code>. We will then specify the <code>covariate = &quot;ccnd1&quot;</code> and <code>annotationsPerCellLine = ccnd1Values</code> parameters in the <code>simem()</code> function.</p>
-<pre class="r"><code>ccnd1Values = cbind.data.frame(cell_line=names(ccnd1Expr),
-                               ccnd1=ccnd1Expr,
-                               stringsAsFactors=FALSE)
-ccnd1Values[1:5,]</code></pre>
-<pre><code>##        cell_line ccnd1
-## 184a1      184a1 4.845
-## 184b5      184b5 5.481
-## 600mpe    600mpe 7.756
-## au565      au565 6.255
-## bt20        bt20 4.346</code></pre>
+<p>Project Achilles screens were performed using a pool of ~54000 hairpins/reagents mapping to ~12000 genes. The reagent annotation table we’ll load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/annotations/achilles_hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>. In this case, any reagents with a mean intensity measurement below 5 (on the log2 scale) in the universal T0 sample are excluded in the analysis. Furthermore, the shRNA reagents in the Achilles screens are identified using the <code>probeset_id</code> column. We’ll specify later how to alter the <code>simem()</code> function to recognize this fact, since by default <code>simem()</code> assumes reagents identified by a <code>trcn_id</code> column.</p>
+<pre class="r"><code>hp = read.delim(&quot;../../data/annotations/achilles_hairpin_annotations.txt&quot;, header=T, as.is=T, check.names=F)
+hpWeights = hp[,c(&quot;probeset_id&quot;, &quot;gene_id&quot;, &quot;weight&quot;)]</code></pre>
 <p> </p>
-<p>For the purposes of this example, to reduce computation time, we’ll perform the analysis for CCND1, which is expected, based on the breast cancer literature, to be more essential in cell lines with higher CCND1 expression. We’ll also examine CDK4 and CDK6 essentiality, since these are known to directly form protein-protein complexes with CCND1 and are known to be required for CCND1’s cell cycle functions in different contexts.</p>
-<pre class="r"><code>genesOfInterest = c(595,   #CCND1
-                    1019,  #CDK4
-                    1021)  #CDK6</code></pre>
+<p>The formatted CCLE microarray-based expression data for these genes can be downloaded <a href="https://github.com/neellab/bfg/blob/gh-pages/data/expression/ccle_achilles_expression.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
+<pre class="r"><code>expr = read.delim(&quot;../../data/expression/ccle_achilles_expression.txt&quot;, header=T, as.is=T, check.names=F)
+
+# Perform the analysis for ids contained in both the expression matrix and the shRNA data.
+commonIds = intersect(expr$gene_id, fdat$gene_id)
+
+# Subset the shRNA data to only include the Achilles screens profiled by CCLE expressions
+samplesToInclude = which(pheno$cell_line %in% colnames(expr))
+achilles = achilles_screens[,samplesToInclude]</code></pre>
 <p> </p>
-<p>If you want to perform a genome-wide analysis, simply omit the <code>geneIds = genesOfInterest</code> parameter. As noted, this analysis typically takes ~18 hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core Linux or OS X systems.</p>
+<p>When we want to specify a different set of covariate values (such as expression) for each gene, we do not specify the <code>covariate</code> and <code>annotationsPerCellLine</code> input parameters for the <code>simem()</code> function. These two parameters are used only when the same covariate values (such as cancer subtype) apply to all genes. Instead, we’ll specify the <code>annotationsPerId = expr</code> input parameter. In order for the <code>expr</code> data frame to be properly formatted, the first column of <code>expr</code> needs to be <code>gene_id</code>, containing the integer Entrez gene ids. The second and subsequent columns need to be screen/cell line names.</p>
+<p>For the purposes of this example, to reduce computation time, we’ll specify a few known oncogenes whose essentiality increases with expression.</p>
+<pre class="r"><code>testIds = c(598, #BCL2L1
+            3845, #KRAS
+            7849, #PAX8
+            6663 #SOX10
+)</code></pre>
 <p> </p>
-<p>If we specify an analysis using both precision and signal-noise measurement weights (<code>inverseVarianceWeights = TRUE</code> and <code>signalProbWeights = TRUE</code> parameters, respectively), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
+<p>By default, the <code>simem()</code> function assumes that columns identifying gene ids, symbols, reagent ids, cell lines, replicates and time-points are specified in the screen data <code>ExpressionSet</code>. The default column names assumed by the <code>simem()</code> function are obtained using <code>getDefaultVariableMap()</code>:</p>
+<pre class="r"><code>t(getDefaultVariableMap())</code></pre>
+<pre><code>##                  [,1]             
+## geneId           &quot;gene_id&quot;        
+## symbol           &quot;symbol&quot;         
+## reagentId        &quot;trcn_id&quot;        
+## cellLineId       &quot;cell_line&quot;      
+## sampleId         &quot;sample_id&quot;      
+## replicateId      &quot;replicate&quot;      
+## timeGroup        &quot;timepointStd&quot;   
+## timeNum          &quot;timepointIndex&quot; 
+## condition        &quot;condition&quot;      
+## screenId         &quot;screen_id&quot;      
+## replicateGroupId &quot;replicate_group&quot;</code></pre>
 <p> </p>
-<p>We’re now ready to predict genes whose essentiality is significantly associated with CCND1 log2-FPKM values.</p>
-<pre class="r"><code>results = simem(screens = breast_screens,
-                geneIds = genesOfInterest,
-                covariate = &quot;ccnd1&quot;,
-                reagentWeights = hpWeights,
-                annotationsPerCellLine = ccnd1Values,
-                inverseVarianceWeights = TRUE,
-                signalProbWeights = TRUE,
-                analyzeReagents = TRUE,
-                parallelNodes = 1
-                )</code></pre>
+<p>As noted, the Achilles reagents are identified using the <code>fdat$probeset_id</code> column. We’ll specify this in the <code>simem()</code> function by adding a <code>variableMap=vars</code> input parameter, as follows:</p>
+<pre class="r"><code>vars = getDefaultVariableMap()
+vars$reagentId = &quot;probeset_id&quot;
+vars$timeNum = &quot;timeNum&quot;
+vars$timeGroup = &quot;timepointIndex&quot;</code></pre>
 <p> </p>
-<p>Here are the gene-level summaries (more detailed gene-level results can be obtained using <code>results$gene_detailed</code>). As expected, CCND1 and CDK4 show strongly significant increases in essentiality in cell lines with higher CCND1 expression. This is consistent with the knockdown of either member of the CCND1-CDK4 complex disrupting the function of the complex. CDK6 is not found to be significantly associated with CCND1 expression, suggesting that in Breast Cancer contexts, CDK4 rather than CDK6 is the primary complex partner for CCND1.</p>
+<p>If you want to perform a genome-wide analysis, simply specify the <code>geneIds = commonIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core Linux or OS X systems.</p>
 <p> </p>
-<p>The <code>difference</code> parameter can be interpreted as the magnitude of the average change in dropout slope associated with each unit increase in log2-FPKM CCND1 expression. In other words, on average the dropout is faster (more negative), indicating increased essentiality, in cell lines with higher CCND1 expression.</p>
+<p>Since the Achilles data is an end-point assay, we must specify the <code>endPoint=TRUE</code> parameter for the <code>simem()</code> function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (<code>inverseVarianceWeights = TRUE</code>), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://github.com/neellab/simem/blob/master/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
+<p> </p>
+<p>We’re now ready to predict genes whose essentiality is significantly associated with expression.</p>
+<pre class="r"><code>results = simem(achilles,
+               geneIds=testIds,
+               reagentWeights=hpWeights,
+               annotationsPerId=expr, 
+               analyzeReagents=TRUE,
+               inverseVarianceWeights=TRUE,
+               endPoint=TRUE,
+               parallelNodes=1,
+               variableMap=vars)</code></pre>
+<p> </p>
+<p>Here are the gene-level summaries (more detailed gene-level results can be obtained using <code>results$gene_detailed</code>). The <code>difference</code> parameter can be interpreted as the magnitude of the average change in dropout slope associated with each unit increase in the gene’s log2 microarray intensity value. In other words, on average the dropout is faster (more negative), indicating increased essentiality, in cell lines with higher expression.</p>
 <pre class="r"><code>options(width=100)
 
 results$gene</code></pre>
-<pre><code>##   gene_id symbol   difference       pvalue          fdr warnings errors
-## 1     595  CCND1 -0.069142031 2.108795e-13 3.163193e-13                
-## 2    1019   CDK4 -0.098144306 9.259274e-24 2.777782e-23                
-## 3    1021   CDK6 -0.006342742 1.509899e-01 1.509899e-01</code></pre>
+<pre><code>##   gene_id symbol  difference       pvalue          fdr warnings errors
+## 1     598 BCL2L1 -0.45103977 1.140391e-10 2.280781e-10                
+## 2    3845   KRAS -0.22064620 6.397026e-08 8.529368e-08                
+## 3    6663  SOX10 -0.46751461 1.098756e-11 4.395024e-11                
+## 4    7849   PAX8 -0.09270574 2.590732e-06 2.590732e-06</code></pre>
 <p> </p>
 <p>Since <code>analyzeReagents = TRUE</code> parameter was specified, per-reagent context-specific essentiality predictions are also available (more detailed gene-level results can be obtained using <code>results$reagent_detailed</code>)</p>
 <pre class="r"><code>options(width=100)
 reagent = results$reagent
-reagent[order(reagent$symbol, reagent$trcn_id), ]</code></pre>
-<pre><code>##           trcn_id gene_id symbol    difference       pvalue          fdr warnings errors
-## 13 TRCN0000010315     595  CCND1  0.0043898353 7.554301e-01 8.183826e-01                
-## 14 TRCN0000010317     595  CCND1 -0.1245646522 5.426349e-06 2.351418e-05                
-## 21 TRCN0000040038     595  CCND1 -0.1298592714 8.398346e-07 1.068391e-05                
-## 22 TRCN0000040039     595  CCND1 -0.1264545296 1.232759e-06 1.068391e-05                
-## 23 TRCN0000040040     595  CCND1  0.0006743605 9.617795e-01 9.617795e-01                
-## 24 TRCN0000040041     595  CCND1  0.0372417472 4.209963e-01 6.755768e-01                
-## 25 TRCN0000040042     595  CCND1 -0.0803004670 2.374300e-05 8.818829e-05                
-## 1  TRCN0000000362    1019   CDK4 -0.1486592957 1.036791e-03 2.695657e-03                
-## 2  TRCN0000000363    1019   CDK4 -0.1151053469 4.804589e-06 2.351418e-05                
-## 3  TRCN0000000364    1019   CDK4 -0.0517594494 1.520418e-04 4.392318e-04                
-## 4  TRCN0000000365    1019   CDK4 -0.0509033521 1.002917e-02 2.370530e-02                
-## 9  TRCN0000009876    1019   CDK4  0.0090458961 4.825386e-01 6.970002e-01                
-## 15 TRCN0000010472    1019   CDK4 -0.1686939532 3.232102e-06 2.100866e-05                
-## 17 TRCN0000010520    1019   CDK4 -0.1148474472 7.583172e-05 2.464531e-04                
-## 18 TRCN0000018364    1019   CDK4 -0.2472135162 3.969374e-09 1.032037e-07                
-## 5  TRCN0000000485    1021   CDK6  0.0040365171 4.384718e-01 6.755768e-01                
-## 6  TRCN0000000486    1021   CDK6 -0.0071061656 4.417233e-01 6.755768e-01                
-## 7  TRCN0000000487    1021   CDK6  0.0033456048 5.704377e-01 7.105954e-01                
-## 8  TRCN0000000488    1021   CDK6 -0.0059697800 6.012731e-01 7.105954e-01                
-## 10 TRCN0000009877    1021   CDK6 -0.0302379973 4.811596e-02 8.935821e-02                
-## 11 TRCN0000010074    1021   CDK6  0.0059725757 5.945774e-01 7.105954e-01                
-## 12 TRCN0000010082    1021   CDK6 -0.0243369962 3.146235e-02 6.816842e-02                
-## 16 TRCN0000010473    1021   CDK6  0.0145013231 5.720802e-01 7.105954e-01                
-## 19 TRCN0000039745    1021   CDK6 -0.0181547237 4.497263e-02 8.935821e-02                
-## 20 TRCN0000039747    1021   CDK6  0.0153839690 6.909228e-01 7.810431e-01                
-## 26 TRCN0000055435    1021   CDK6 -0.0037305824 8.303432e-01 8.635569e-01</code></pre>
-<p> </p>
-<p>The above analysis tests whether the essentiality of each specified gene is associated with CCND1 expression. In the next section we will see how to test whether the essentiality of a gene is significantly associated with that gene’s own mRNA expression level.</p>
+reagent[order(reagent$symbol, reagent$probeset_id), ]</code></pre>
+<pre><code>##           probeset_id gene_id symbol   difference       pvalue          fdr warnings errors
+## 17 TRCN0000033499m_st     598 BCL2L1 -1.084601359 1.328498e-07 7.970986e-07                
+## 18 TRCN0000033500m_st     598 BCL2L1 -0.570923603 2.085288e-05 1.000938e-04                
+## 19 TRCN0000033501m_st     598 BCL2L1 -0.225331047 8.695563e-02 1.739113e-01                
+## 20 TRCN0000033502m_st     598 BCL2L1 -0.253058519 1.634092e-01 2.385993e-01                
+## 21 TRCN0000033503m_st     598 BCL2L1 -0.127568563 1.417070e-01 2.267312e-01                
+## 1  TRCN0000010369m_st    3845   KRAS -0.182540262 5.705246e-02 1.244781e-01                
+## 2  TRCN0000018337m_st    3845   KRAS -0.101807686 1.234060e-01 2.115532e-01                
+## 13 TRCN0000033259m_st    3845   KRAS -0.704177541 9.220785e-09 7.376628e-08                
+## 14 TRCN0000033260m_st    3845   KRAS -0.389424485 3.798133e-03 1.139440e-02                
+## 15 TRCN0000033261m_st    3845   KRAS -0.069402072 4.609164e-01 5.530996e-01                
+## 16 TRCN0000033263m_st    3845   KRAS  0.006208942 9.613397e-01 9.613397e-01                
+## 22 TRCN0000040150m_st    3845   KRAS -0.129222825 1.690078e-01 2.385993e-01                
+## 23 TRCN0000040151m_st    3845   KRAS  0.048893350 7.293661e-01 7.610777e-01                
+## 24 TRCN0000040152m_st    3845   KRAS -0.449105840 1.390005e-02 3.706681e-02                
+## 8  TRCN0000021274m_st    7849   PAX8 -0.089940851 4.842104e-02 1.162105e-01                
+## 9  TRCN0000021275m_st    7849   PAX8  0.040427702 2.591113e-01 3.454817e-01                
+## 10 TRCN0000021276m_st    7849   PAX8 -0.020082596 5.432624e-01 6.159332e-01                
+## 11 TRCN0000021277m_st    7849   PAX8 -0.058332023 1.200286e-01 2.115532e-01                
+## 12 TRCN0000021278m_st    7849   PAX8 -0.335958596 2.230537e-10 2.676644e-09                
+## 3  TRCN0000018984m_st    6663  SOX10 -1.126964461 6.338370e-14 1.521209e-12                
+## 4  TRCN0000018985m_st    6663  SOX10 -0.435469574 2.512846e-04 9.216024e-04                
+## 5  TRCN0000018986m_st    6663  SOX10 -0.078974328 5.646055e-01 6.159332e-01                
+## 6  TRCN0000018987m_st    6663  SOX10 -0.120424704 4.226760e-01 5.339065e-01                
+## 7  TRCN0000018988m_st    6663  SOX10 -0.693519719 2.688007e-04 9.216024e-04</code></pre>
 </div>
 
 

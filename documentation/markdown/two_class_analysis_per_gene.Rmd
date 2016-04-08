@@ -1,0 +1,130 @@
+Two-Class Differential Essentiality Analysis - With Different Class Assignments Per Gene
+(e.g., For Per Gene Amplification vs. Essentiality analysis)
+-------------------------------------------------------------
+
+Previously we detailed how to perform a two-class analysis using HER2+ status as an example (see [HER2+ two class analysis](https://neellab.github.io/simem/)). This analysis assumes that the cell line class assignments are identical for all genes. In other words, the HER2+ cell lines are fixed, and the essentiality of each gene is considered in the same HER2+ cell lines vs. the remaining HER2- cell lines.
+
+However, an often-asked analysis question is whether the essentiality of a gene is associated with a change in a genomic variable specific to that gene. An example highlighted in our manuscript is the analysis of a gene's copy gain or loss vs. its essentiality. We may be interested in determining which genes are more essential in copy-gained cell lines (putative copy number-associated driver oncogenes), or which genes are more essential in copy-loss cell lines (putative CYCLOPS genes, see Nijhawan et al. 2013).
+
+For this example, we detail how to generate predictions of copy gain-associated oncogene drivers from our Breast data. The workflow for this analysis is similar to the HER2+ example, except that we will detail how to find, format and input per-gene copy number status.
+
+As before, first [download the simem R code](https://neellab.github.io/simem/), and remember that while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
+
+```{r load_code}
+
+### To install required packages, uncomment and run this
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite(c("Biobase", "preprocessCore", "genefilter"))
+# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+
+suppressPackageStartupMessages(library("Biobase"))
+suppressPackageStartupMessages(library("blme"))
+suppressPackageStartupMessages(library("doMC"))
+suppressPackageStartupMessages(library("genefilter"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("locfit"))
+suppressPackageStartupMessages(library("MASS"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("preprocessCore"))
+suppressPackageStartupMessages(library("reshape"))
+
+
+source("../../R/data_format_lib.R")
+source("../../R/model_lib.R")
+source("../../R/simem_lib.R")
+```
+&nbsp;
+
+The screen data formatted as an `ExpressionSet`, loaded below, can be downloaded [here](https://github.com/neellab/bfg/blob/gh-pages/data/breast_screens_with_weights.eset).
+
+```{r load_screen_data}
+
+load("../../data/shrna/breast_screens_with_weights.eset")
+breast_screens
+```
+&nbsp;
+
+The reagent annotation table we're about to load, including the `weight` column which will be used to exclude some reagents, can be downloaded [here](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+
+```{r load_hp_annotations}
+hp = read.delim("../../data/annotations/hairpin_annotations.txt", header=T, as.is=T, check.names=F)
+hpWeights = hp[,c("trcn_id", "gene_id", "weight")]
+```
+&nbsp;
+
+The per-gene breast cell line CNA log-R ratios can be downloaded here [here](https://github.com/neellab/bfg/blob/gh-pages/data/cna/breast_cna_lrr.txt.zip?raw=true). We will then dichotomize the continuous log R-Ratio values using a threshold of 0.2, above which we consider a gene to exhibit copy gain in the CNA data. We will also remove all identifier columns except for `gene_id`, which allows us to match a gene's copy gain status across cell lines to its essentiality. The `simem()` function will try to match gene ids from the essentiality data and the copy number data, and only analyze a gene if its `gene_id` is present in both datasets. Thus it is not critial to filter the `gene_id`s of the copy number data to match those of the essentiality data.
+
+```{r load_cna}
+cna = read.delim("../../data/cna/breast_cna_lrr.txt", header=T, as.is=T, check.names=F)
+# Store the gene_ids
+geneIds = cna$gene_id
+# Separate the log R-Ratio values and dichotomize them
+lrr = as.matrix(cna[,-grep("ensembl_id|gene_id|symbol", colnames(cna))])
+gains = ifelse(lrr >= 0.2, "gain", "other")
+gains = cbind.data.frame(gene_id=geneIds, gains, stringsAsFactors=F)
+```
+&nbsp;
+
+In order to run a per-gene analysis, we must omit the `covariate` parameter from the `simem()` function (or alternately, specify `covariate = NULL`), and set the `annotationsPerId = gains` parameter. The `simem()` function will then extract the cell line class assignments ("gain" or "other") for each gene from the `gains` data frame.
+
+&nbsp;
+
+As before, we want to determine whether a gene is more essential in "gain" cell lines compared to all "other", so we'll set the `covariateFactorOrder = c("other", "gain")` parameter in the `simem()` function.
+
+&nbsp;
+
+For the purposes of this example, to reduce computation time, we'll perform the analysis for some copy-gain-driven Breast cancer oncogenes
+
+```{r specify_ids}
+geneList = c(596, #BCL2
+            595, #CCND1
+            1956, #EGFR
+            2064, #ERBB2
+            2099, #ESR1
+            2263, #FGFR2
+            7022) #TFAP2C
+```
+&nbsp;
+
+If we want to perform a genome-wide analysis, simply omit the `geneIds = signalingPathway` parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 6 processor cores, for example, specify the `parallelNodes = 6` parameter. This option is only available on Linux or OS X at present.
+
+&nbsp;
+
+If we specify an analysis using both precision and signal-noise measurement weights (`inverseVarianceWeights = TRUE` and `signalProbWeights = TRUE` parameters, respectively), we must ensure that we've added these weights to the `ExpressionSet` beforehand ([detailed here]()).
+
+&nbsp;
+
+Combining all the above, we're ready to perform the differential essentiality analysis.
+
+```{r simem}
+
+results = simem(screens = breast_screens,
+                geneIds = geneList,
+                reagentWeights = hpWeights,
+                annotationsPerCellLine = status,
+                inverseVarianceWeights = TRUE,
+                signalProbWeights = TRUE,
+                analyzeReagents = TRUE,
+                covariateFactorOrder = c("other", "gain"), 
+                parallelNodes = 1
+                )
+```
+&nbsp;
+
+As before, here are the predictions for genes known to be more essential in association with copy number gains.
+
+```{r show_gene}
+options(width=100)
+
+results$gene
+```
+&nbsp;
+
+And here are the hairpin-level results.
+
+```{r show_reagent}
+options(width=100)
+reagent = results$reagent
+reagent[order(reagent$symbol, reagent$trcn_id), ]
+```
+&nbsp;
