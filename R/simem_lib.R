@@ -26,7 +26,7 @@ simemIsogenic = function(screens,
                         # Fit siMEM models using the lme4 or blme packages as specified
                         modelEngine="blme",
                         variableMap=getDefaultVariableMap(),
-                        formulas=getModelFormulas(), 
+                        formulas=NULL, 
                         printFreq=20, 
                         parallelNodes=1
 			   ) {
@@ -73,7 +73,7 @@ simem = function(screens,
                 # Fit siMEM models using the lme4 or blme packages as specified
                 modelEngine="blme",
                 variableMap=getDefaultVariableMap(), 
-                formulas=getModelFormulas(), 
+                formulas=NULL, 
                 printFreq=20, 
                 endPoint=FALSE,
                 parallelNodes=1
@@ -132,7 +132,8 @@ simemAnalysis = function(screens,
 						            # Fit siMEM models using the lme4 or blme packages as specified
 						            modelEngine="blme",
             						variableMap=getDefaultVariableMap(),
-						            formulas=getModelFormulas(), 
+#						            formulas=getModelFormulas(),
+                        formulas=NULL, 
 						            printFreq=20, 
 						            endPoint=FALSE, 
 						            parallelNodes=1
@@ -482,7 +483,7 @@ simemChunk = function(screens,
           						# Fit siMEM models using the lme4 or blme packages as specified
           						modelEngine="blme",
           						variableMap=getDefaultVariableMap(), 
-          						formulas=getModelFormulas(), 
+          						formulas=NULL, 
           						endPoint=FALSE, 
                       printFreq=20
 				   ) {
@@ -600,8 +601,10 @@ simemChunk = function(screens,
 	if(calculateRelativeDropout == TRUE & endPoint == FALSE & nrow(allfitsSummary) >= minRowsForRDR) {
 		allfitsSummary = getRelativeDropoutRates(allfitsSummary, geneOrReagent="gene")
 	}
-
-	allfitsMinimal = getMinimalSummary(allfitsSummary, endPoint)
+	
+	allfitsMinimal = getMinimalSummary(allfitsSummary, 
+	                                   calculateRelativeDropout=calculateRelativeDropout, 
+	                                   endPoint=endPoint)
 
 	allfitsSummary = cbind.data.frame(rownames(allfitsSummary), allfitsSummary, stringsAsFactors=F)
 	colnames(allfitsSummary)[1] = variableMap$geneId
@@ -614,8 +617,7 @@ simemChunk = function(screens,
 	allfitsMinimal[,variableMap$geneId] = as.integer(allfitsMinimal[,variableMap$geneId])
 	allfitsMinimal = cbind.data.frame(allfitsMinimal, warnings=fitsWarnings, errors=fitsErrors, stringsAsFactors=F)
 	allfitsMinimal = merge(annot, allfitsMinimal)
-
-
+	
 	# Only fit reagent-level models if specified (TRUE by default)
 	if(analyzeReagents==TRUE) {
 

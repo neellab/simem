@@ -56,7 +56,7 @@ fitModel = function(dat, modelFormula, modelEngine="blme", prior="wishart") {
   							cov.prior = prior)
   					)
   	} else {
-  
+
   		# Fit a data-weighted hierarchical model with weakly informative priors.
   		model = tryCatchWarningsErrors(
   					blmer(modelFormula, data=dat, weights=W, REML=FALSE,
@@ -92,10 +92,6 @@ fitModel = function(dat, modelFormula, modelEngine="blme", prior="wishart") {
   	  }
 	  }
 
-#	print(str(modelFormula))
-#	print(str(model))
-#	stop("...")
-	
 	return(model)
 }
 
@@ -166,7 +162,6 @@ summaryFitEffectCoefs = function(fit) {
 		cols = gsub("timenum2_(.*)_(estimate|t|se)$", "dropout_quadratic_diff_\\1_\\2", cols)
 
 		colnames(lst) = cols
-#		print(lst)
 	}
 
 	return(lst)
@@ -259,7 +254,6 @@ fitModelAndFormatOutput = function(dat,
 	if(!(is.null(m1$result)) & !(is.null(m1$result))) {
 
 #		anov01 = fitAnova(m0$result, m1$result)
-
 	  summaryFitMetrics = summaryFitLogLik(m1$result)
 	  summaryFixedEffects = summaryFitEffectCoefs(m1$result)
 
@@ -523,13 +517,16 @@ getMinimalSummary = function(modelSummary, calculateRelativeDropout=FALSE, endPo
 	ids = intersect(c("reagentId", "geneId", "symbol"), cols)
 
 	if(endPoint==TRUE) {
-
 		magnitudes = cols[grep("^.*_estimate$", cols)]
 		pvalues = cols[grep("^.*_pvalue$", cols)]
+
+		# Because of end-point results formatting, need to explicitly exclude intercept values from the summary. 
+    magnitudes = setdiff(magnitudes, "intercept_estimate")
+    pvalues = setdiff(pvalues, "intercept_pvalue")
+				
 		minimalSummary = modelSummary[,c(ids, magnitudes, pvalues)]
 
 	} else {
-
 		dropouts = cols[grep("^dropout_rate_diff_.*estimate$", cols)]
 		pvalues = cols[grep("^dropout_rate_diff_.*pvalue$", cols)]
 
@@ -825,8 +822,6 @@ getMeanVar = function(exprs, pheno, minVar=0.01, smoothing = 0.05, variableMap=g
 	    message(grp)
 	  }
 
-#		print(paste("calculating mean-variance for group: ", grp, sep=""))
-
 		# Get the unique sample identifiers for all cell line/timepoint replicates
 		samples = pheno[pheno[,variableMap$replicateGroupId] == grp, variableMap$sampleId]
 		sampleDat = exprs[,samples,drop=F]
@@ -851,8 +846,6 @@ getMeanVar = function(exprs, pheno, minVar=0.01, smoothing = 0.05, variableMap=g
 
 		meanVar[[grp]] = meanVarTable
 		meanVarFit[[grp]] = meanVarFitted
-#		meanVarPredicted[[grp]] = fitted(meanVarFit[[grp]])
-#		print(str(meanVar[[grp]]))
 	}
 
 	final = list()
@@ -965,7 +958,6 @@ addSignalProbWeights = function(eset, signalProbTable, variableMap=getDefaultVar
 			repeated = matrix(rep(previousProb, times=length(samples)),
 								nrow=length(previousProb), ncol=length(samples))
 			colnames(repeated) = samples
-	#		print(str(repeated))
 
 			# Store signal weights for this timepoint
 			tempMx[,samples] = repeated

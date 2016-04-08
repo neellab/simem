@@ -598,15 +598,10 @@ assignWeightsToObservations = function(dat,
 		if(weightCL) {
 			# By this point, the reagent column is identified by the string "reagentId"
 			# regardless of the original column label
-			print(str(dat))
 			cellLines = unique(dat$cellLineId)
 			colnames(cellLineWeights)[1] = "cellLineId"
 			clWeights = cellLineWeights[cellLineWeights$cellLineId %in% cellLines, c("cellLineId", "weight"), drop=F]
 			colnames(clWeights)[2] = "cell_line_weights"
-
-#			print(str(cellLineWeights))
-#			print(str(cellLines))
-#			print(str(clWeights))
 
 			#append reagent-specific weights
 			dat = merge(dat, clWeights, by="cellLineId", all.x=T)
