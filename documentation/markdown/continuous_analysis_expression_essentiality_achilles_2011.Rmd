@@ -1,0 +1,146 @@
+Essentiality associated with continuous expression: Project Achilles (Cheung et al. 2011) per-gene continuous expression vs. essentiality
+-------------------------------------------------------------
+
+&nbsp;
+
+First [__DOWNLOAD SIMEM R CODE__](https://github.com/neellab/simem/tree/master/R). 
+&nbsp;
+Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
+
+```{r load_code}
+
+### To install required packages, uncomment and run this
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite(c("Biobase", "preprocessCore", "genefilter"))
+# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+
+suppressPackageStartupMessages(library("Biobase"))
+suppressPackageStartupMessages(library("blme"))
+suppressPackageStartupMessages(library("doMC"))
+suppressPackageStartupMessages(library("genefilter"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("locfit"))
+suppressPackageStartupMessages(library("MASS"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("preprocessCore"))
+suppressPackageStartupMessages(library("reshape"))
+
+
+source("../../R/data_format_lib.R")
+source("../../R/model_lib.R")
+source("../../R/simem_lib.R")
+```
+&nbsp;
+
+<!---
+achilles_screens_with_weights.eset ExpressionSet is stored on and linked to from Dropbox account, under /github/simem/data/shrna/
+-->
+The Cheung et al. 2011 Project Achilles screen data formatted as an `ExpressionSet`, including measurement weights, can be downloaded [__HERE__](https://www.dropbox.com/s/qj26t8ymz24bmcl/achilles_screens_with_weights.eset?dl=1).
+
+```{r load_screen_data}
+
+load("../../data/shrna/achilles_screens_with_weights.eset")
+fdat = fData(achilles_screens)
+pheno = pData(achilles_screens)
+
+achilles_screens
+```
+&nbsp;
+
+Project Achilles screens were performed using a pool of ~54000 hairpins/reagents mapping to ~12000 genes. The reagent annotation table we'll load, including the `weight` column which will be used to exclude some reagents, can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/achilles_hairpin_annotations.txt.zip?raw=true). In this case, any reagents with a mean intensity measurement below 5 (on the log2 scale) in the universal T0 sample are excluded in the analysis. Furthermore, the shRNA reagents in the Achilles screens are identified using the `probeset_id` column. We'll specify later how to alter the `simem()` function to recognize this fact, since by default `simem()` assumes reagents identified by a `trcn_id` column.
+
+```{r load_hp_annotations}
+hp = read.delim("../../data/annotations/achilles_hairpin_annotations.txt", header=T, as.is=T, check.names=F)
+hpWeights = hp[,c("probeset_id", "gene_id", "weight")]
+```
+&nbsp;
+
+The formatted CCLE microarray-based expression data for these genes can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/expression/ccle_achilles_expression.txt.zip?raw=true).
+
+```{r load_expression}
+
+expr = read.delim("../../data/expression/ccle_achilles_expression.txt", header=T, as.is=T, check.names=F)
+
+# Perform the analysis for ids contained in both the expression matrix and the shRNA data.
+commonIds = intersect(expr$gene_id, fdat$gene_id)
+
+# Subset the shRNA data to only include the Achilles screens profiled by CCLE expressions
+samplesToInclude = which(pheno$cell_line %in% colnames(expr))
+achilles = achilles_screens[,samplesToInclude]
+
+```
+&nbsp;
+
+When we want to specify a different set of covariate values (such as expression) for each gene, we do not specify the `covariate` and `annotationsPerCellLine` input parameters for the `simem()` function. These two parameters are used only when the same covariate values (such as cancer subtype) apply to all genes. Instead, we'll specify the `annotationsPerId = expr` input parameter. In order for the `expr` data frame to be properly formatted, the first column of `expr` needs to be `gene_id`, containing the integer Entrez gene ids. The second and subsequent columns need to be screen/cell line names.
+
+For the purposes of this example, to reduce computation time, we'll specify a few known oncogenes whose essentiality increases with expression.
+
+```{r specify_ids}
+testIds = c(598, #BCL2L1
+            3845, #KRAS
+            7849, #PAX8
+            6663 #SOX10
+)
+```
+&nbsp;
+
+By default, the `simem()` function assumes that columns identifying gene ids, symbols, reagent ids, cell lines, replicates and time-points are specified in the screen data `ExpressionSet`. The default column names assumed by the `simem()` function are obtained using `getDefaultVariableMap()`:
+
+```{r get_variables} 
+t(getDefaultVariableMap())
+```
+&nbsp;
+
+As noted, the Achilles reagents are identified using the  `fdat$probeset_id` column. We'll specify this in the `simem()` function by adding a `variableMap=vars` input parameter, as follows:
+
+```{r specify_variables}
+
+vars = getDefaultVariableMap()
+vars$reagentId = "probeset_id"
+vars$timeNum = "timeNum"
+vars$timeGroup = "timepointIndex"
+```
+&nbsp;
+
+If you want to perform a genome-wide analysis, simply specify the `geneIds = commonIds` parameter. This analysis typically takes several hours but can be greatly reduced using the `parallelNodes` parameter on multi-core Linux or OS X systems.
+
+&nbsp;
+
+Since the Achilles data is an end-point assay, we must specify the `endPoint=TRUE` parameter for the `simem()` function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (`inverseVarianceWeights = TRUE`), we must ensure that we've added these weights to the `ExpressionSet` beforehand ([__DETAILED HERE__](https://neellab.github.io/simem/documentation/markdown/weights_precision.html)). 
+
+&nbsp;
+
+We're now ready to predict genes whose essentiality is significantly associated with expression.
+
+```{r simem}
+
+
+results = simem(achilles,
+               geneIds=testIds,
+               reagentWeights=hpWeights,
+               annotationsPerId=expr, 
+               analyzeReagents=TRUE,
+               inverseVarianceWeights=TRUE,
+               endPoint=TRUE,
+               parallelNodes=1,
+               variableMap=vars)
+```
+&nbsp;
+
+Here are the gene-level summaries (more detailed gene-level results can be obtained using `results$gene_detailed`). The `difference` parameter can be interpreted as the magnitude of the average change in dropout slope associated with each unit increase in the gene's log2 microarray intensity value. In other words, on average the dropout is faster (more negative), indicating increased essentiality, in cell lines with higher expression.
+
+```{r show_gene}
+options(width=100)
+
+results$gene
+```
+&nbsp;
+
+Since `analyzeReagents = TRUE` parameter was specified, per-reagent context-specific essentiality predictions are also available (more detailed gene-level results can be obtained using `results$reagent_detailed`)
+
+```{r show_reagent}
+options(width=100)
+reagent = results$reagent
+reagent[order(reagent$symbol, reagent$probeset_id), ]
+```
+

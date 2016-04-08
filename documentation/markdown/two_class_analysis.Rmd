@@ -1,9 +1,12 @@
-Two-Class Differential Essentiality Analysis
+2 class context-specific essentiality: Breast HER2+ example
 -------------------------------------------------------------
 
-
-First [download the simem R code](https://neellab.github.io/simem/). 
 &nbsp;
+
+First [__DOWNLOAD THE SIMEM R CODE__](https://github.com/neellab/simem/tree/master/R). 
+
+&nbsp;
+
 Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
 
 ```{r load_code}
@@ -31,7 +34,7 @@ source("../../R/simem_lib.R")
 ```
 &nbsp;
 
-The screen data formatted as an `ExpressionSet`, loaded below, can be downloaded [here](https://github.com/neellab/bfg/blob/gh-pages/data/breast_screens_with_weights.eset).
+The screen data formatted as an `ExpressionSet`, including measurement weights, can be downloaded [__HERE__](https://www.dropbox.com/s/dp278iu9kle98fy/breast_screens_with_weights.eset?dl=1).
 
 ```{r load_screen_data}
 
@@ -40,7 +43,7 @@ breast_screens
 ```
 &nbsp;
 
-The reagent annotation table we're about to load, including the `weight` column which will be used to exclude some reagents, can be downloaded [here](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+The reagent annotation table we're about to load, including the `weight` column which will be used to exclude some reagents, can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
 
 ```{r load_hp_annotations}
 hp = read.delim("../../data/annotations/hairpin_annotations.txt", header=T, as.is=T, check.names=F)
@@ -48,7 +51,7 @@ hpWeights = hp[,c("trcn_id", "gene_id", "weight")]
 ```
 &nbsp;
 
-The breast cell line subtypes table detailing the classes we want to compare for differential essentiality can be downloaded [here](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/cell_line_subtypes.txt.zip?raw=true).
+The breast cell line subtypes table detailing the classes we want to compare for differential essentiality can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/cell_line_subtypes.txt.zip?raw=true).
 
 ```{r load_subtypes}
 subtypes = read.delim("../../data/annotations/cell_line_subtypes.txt", header=T, as.is=T, check.names=F)
@@ -60,6 +63,7 @@ Once the subtypes table is loaded, we want to reduce the 4 subtype Neve classifi
 
 ```{r create_covariate}
 status$erbb2 = ifelse(status$subtype_neve == "her2", "her2", "other")
+status[1:10,]
 ```
 &nbsp;
 
@@ -91,7 +95,7 @@ If we want to perform a genome-wide analysis, simply omit the `geneIds = signali
 
 &nbsp;
 
-If we specify an analysis using both precision and signal-noise measurement weights (`inverseVarianceWeights = TRUE` and `signalProbWeights = TRUE` parameters, respectively), we must ensure that we've added these weights to the `ExpressionSet` beforehand ([detailed here]()).
+If we specify an analysis using both precision and signal-noise measurement weights (`inverseVarianceWeights = TRUE` and `signalProbWeights = TRUE` parameters, respectively), we must ensure that we've added these weights to the `ExpressionSet` beforehand ([__DETAILED HERE__](https://neellab.github.io/simem/documentation/markdown/weights_precision.html)).
 
 &nbsp;
 

@@ -1,0 +1,134 @@
+Essentiality with continuous expression: Breast CCND1 expression example
+-------------------------------------------------------------
+
+&nbsp;
+
+We previously worked through a basic 2 class differential essentiality analysis using cell line HER2+ status as an example. Here we see how to predict genes whose essentiality is associated (positively or negatively) with a continuous variable, such as RNA-Seq expression of a gene. We'll use the expression of well-known Breast oncogene CCND1 as a case study.
+
+First [__DOWNLOAD THE SIMEM R CODE__](https://github.com/neellab/simem/tree/master/R). 
+&nbsp;
+Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
+
+```{r load_code}
+
+### To install required packages, uncomment and run this
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite(c("Biobase", "preprocessCore", "genefilter"))
+# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+
+suppressPackageStartupMessages(library("Biobase"))
+suppressPackageStartupMessages(library("blme"))
+suppressPackageStartupMessages(library("doMC"))
+suppressPackageStartupMessages(library("genefilter"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("locfit"))
+suppressPackageStartupMessages(library("MASS"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("preprocessCore"))
+suppressPackageStartupMessages(library("reshape"))
+
+
+source("../../R/data_format_lib.R")
+source("../../R/model_lib.R")
+source("../../R/simem_lib.R")
+```
+&nbsp;
+
+The screen data formatted as an `ExpressionSet`, including measurement weights, can be downloaded [__HERE__](https://www.dropbox.com/s/dp278iu9kle98fy/breast_screens_with_weights.eset?dl=1).
+
+```{r load_screen_data}
+
+load("../../data/shrna/breast_screens_with_weights.eset")
+#breast_screens
+```
+&nbsp;
+
+The reagent annotation table we're about to load, including the `weight` column which will be used to exclude some reagents, can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/annotations/hairpin_annotations.txt.zip?raw=true).
+
+```{r load_hp_annotations}
+hp = read.delim("../../data/annotations/hairpin_annotations.txt", header=T, as.is=T, check.names=F)
+hpWeights = hp[,c("trcn_id", "gene_id", "weight")]
+```
+&nbsp;
+
+The breast RNA-Seq expression file, from which we'll extract CCND1 log2-FPKM expression values, can be downloaded [__HERE__](https://github.com/neellab/bfg/blob/gh-pages/data/rnaseq/breast_rnaseq_qn.txt.zip?raw=true).
+
+```{r load_rnaseq}
+options(width=100)
+
+rnaseq = read.delim("../../data/rnaseq/breast_rnaseq_qn.txt", header=T, as.is=T, check.names=F)
+# Get the row index for CCND1 expression
+ccnd1Index = which(rnaseq$symbol == "CCND1")
+# Remove all identifier columns, and drop the columns dimension, resulting in a cell-line-named vector of log2-FPKM values
+ccnd1Expr = unlist(rnaseq[ccnd1Index,-grep("gene_id|symbol|ensembl_id", colnames(rnaseq))])
+ccnd1Expr
+```
+&nbsp;
+
+Once we have the CCND1 log2-FPKM expression values, we want to construct a data frame with 2 columns: `cell_line` as the 1st column, and a second column to contain the expression values, which we'll creatively name `ccnd1`. We will then specify the `covariate = "ccnd1"` and `annotationsPerCellLine = ccnd1Values` parameters in the `simem()` function.
+
+```{r create_covariate}
+ccnd1Values = cbind.data.frame(cell_line=names(ccnd1Expr),
+                               ccnd1=ccnd1Expr,
+                               stringsAsFactors=FALSE)
+ccnd1Values[1:5,]
+```
+&nbsp;
+
+For the purposes of this example, to reduce computation time, we'll perform the analysis for CCND1, which is expected, based on the breast cancer literature, to be more essential in cell lines with higher CCND1 expression. We'll also examine CDK4 and CDK6 essentiality, since these are known to directly form protein-protein complexes with CCND1 and are known to be required for CCND1's cell cycle functions in different contexts.
+
+```{r specify_ids}
+genesOfInterest = c(595,   #CCND1
+                    1019,  #CDK4
+                    1021)  #CDK6
+```
+&nbsp;
+
+If you want to perform a genome-wide analysis, simply omit the `geneIds = genesOfInterest` parameter. As noted, this analysis typically takes ~18 hours but can be greatly reduced using the `parallelNodes` parameter on multi-core Linux or OS X systems.
+
+&nbsp;
+
+If we specify an analysis using both precision and signal-noise measurement weights (`inverseVarianceWeights = TRUE` and `signalProbWeights = TRUE` parameters, respectively), we must ensure that we've added these weights to the `ExpressionSet` beforehand ([__DETAILED HERE__](https://neellab.github.io/simem/documentation/markdown/weights_precision.html)).
+
+&nbsp;
+
+We're now ready to predict genes whose essentiality is significantly associated with CCND1 log2-FPKM values.
+
+```{r simem}
+
+results = simem(screens = breast_screens,
+                geneIds = genesOfInterest,
+                covariate = "ccnd1",
+                reagentWeights = hpWeights,
+                annotationsPerCellLine = ccnd1Values,
+                inverseVarianceWeights = TRUE,
+                signalProbWeights = TRUE,
+                analyzeReagents = TRUE,
+                parallelNodes = 1
+                )
+```
+&nbsp;
+
+Here are the gene-level summaries (more detailed gene-level results can be obtained using `results$gene_detailed`). As expected, CCND1 and CDK4 show strongly significant increases in essentiality in cell lines with higher CCND1 expression. This is consistent with the knockdown of either member of the CCND1-CDK4 complex disrupting the function of the complex. CDK6 is not found to be significantly associated with CCND1 expression, suggesting that in Breast Cancer contexts, CDK4 rather than CDK6 is the primary complex partner for CCND1.
+
+&nbsp;
+
+The `difference` parameter can be interpreted as the magnitude of the average change in dropout slope associated with each unit increase in log2-FPKM CCND1 expression. In other words, on average the dropout is faster (more negative), indicating increased essentiality, in cell lines with higher CCND1 expression.
+
+```{r show_gene}
+options(width=100)
+
+results$gene
+```
+&nbsp;
+
+Since `analyzeReagents = TRUE` parameter was specified, per-reagent context-specific essentiality predictions are also available (more detailed gene-level results can be obtained using `results$reagent_detailed`)
+
+```{r show_reagent}
+options(width=100)
+reagent = results$reagent
+reagent[order(reagent$symbol, reagent$trcn_id), ]
+```
+&nbsp;
+
+The above analysis tests whether the essentiality of each specified gene is associated with CCND1 expression. In the next section we will see how to test whether the essentiality of a gene is significantly associated with that gene's own mRNA expression level.

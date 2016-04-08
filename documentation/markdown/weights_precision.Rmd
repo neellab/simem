@@ -7,7 +7,7 @@ Calculating precision weights first requires that screen data and annotations be
 
 &nbsp;
 
-Here's what that looks like for the [breast screens ExpressionSet](http://www.google.com):
+Here's what that looks like for the [__BREAST SCREENS FROM MARCOTTE et al. 2016__](https://www.dropbox.com/s/a16l4thfeu9u206/breast_screens.eset?dl=1):
 
 ```{r load_breast}
 
@@ -40,7 +40,7 @@ table(phenoBreast$replicate_group)[1:21]
 
 &nbsp;
 
-Here's the same grouping for the [Achilles screens ExpressionSet](http://www.google.com):
+Here's the same grouping for the [__ACHILLES SCREENS FROM CHEUNG et al. 2011__](https://www.dropbox.com/s/w8q1jkyvnozto84/achilles_screens.eset?dl=1):
 
 ```{r load_achilles}
 load("../../data/shrna/achilles_screens.eset")
