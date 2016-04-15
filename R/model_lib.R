@@ -805,8 +805,10 @@ getReplicateMeanVar = function(reps) {
 	return(final)
 }
 
-
-getMeanVar = function(exprs, pheno, minVar=0.01, smoothing = 0.05, variableMap=getDefaultVariableMap(), printProgress=FALSE) {
+##
+# smoothing with locfit causes segfault in locfit C code for some data (Project Achilles Cowley 2014 in particular)
+##
+getMeanVar = function(exprs, pheno, minVar=0.1, smoothing = 0.5, method="loess", variableMap=getDefaultVariableMap(), printProgress=FALSE) {
 
 	meanVar = list()
 	meanVarFit = list()
@@ -829,9 +831,18 @@ getMeanVar = function(exprs, pheno, minVar=0.01, smoothing = 0.05, variableMap=g
 		meanVarTable = getReplicateMeanVar(sampleDat)
 
 		if(length(samples) > 1) {
-			meanVarFitted = locfit(variance ~ mu, data=meanVarTable, family="gamma", alpha=smoothing)
-			# To get the precision (inverse-variance) weights, first get the smoothed mean-variance fit at the given mean.
-			meanVarTable$variance_smoothed = fitted(meanVarFitted, data=meanVarTable)
+
+		  if(method == "locfit") {
+		    # the locfit C code sometimes segfaults - possibly when too many mean-variance pairs are identical
+		    meanVarFitted = locfit(variance ~ mu, data=meanVarTable, family="gamma", alpha=smoothing)
+		    # To get the precision (inverse-variance) weights, first get the smoothed mean-variance fit at the given mean.
+		    meanVarTable$variance_smoothed = fitted(meanVarFitted, data=meanVarTable)
+      } else {
+        meanVarFitted = loess(variance ~ mu, data=meanVarTable, span=smoothing)
+        # To get the precision (inverse-variance) weights, first get the smoothed mean-variance fit at the given mean.
+        meanVarTable$variance_smoothed = predict(meanVarFitted, data=meanVarTable)
+      }
+
 		} else {
 			# In the case of a single replicate, set the mean as the values of that replicate, and the variance to 1
 			# inverse-variance weights will then be equal to 1, ie: equal weights.
