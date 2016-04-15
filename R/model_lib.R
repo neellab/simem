@@ -875,7 +875,7 @@ addPrecisionWeights = function(eset, variableMap = getDefaultVariableMap(), minV
 	pheno = pData(eset)
 	fdat = fData(eset)
 
-	meanVar = getMeanVar(shrna, pheno, minVar=minVar, smoothing=smoothing, variableMap=variableMap)
+	meanVar = getMeanVar(shrna, pheno, minVar=minVar, smoothing=smoothing, variableMap=variableMap, printProgress=printProgress)
 
 	message("Finalizing mean-variance function calculations and assigning precision weights to data points...")
 
