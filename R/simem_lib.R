@@ -140,8 +140,10 @@ simemAnalysis = function(screens,
 				   ) {
 
 	if(parallelNodes > 1) {
-		library(doMC);
-		registerDoMC(parallelNodes);
+		library(doParallel)
+	  cl = makePSOCKcluster(parallelNodes)
+	  registerDoParallel(cl)
+#	  registerDoParallel(cores=parallelNodes)
 	}
 
 	##################################################################
@@ -375,9 +377,57 @@ simemAnalysis = function(screens,
 		## Split Ids into chunks and do parallel processing
 		geneIdsList = by(geneIds, INDICES=list(chunkIndex), function(v) v)
 
-		packages = c("Biobase", "preprocessCore", "blme", "reshape", "genefilter")
+		packages = c("Biobase", "preprocessCore", "blme", "reshape", "genefilter", "plyr")
 
-		final = foreach(geneIds=iter(geneIdsList), .combine="combineResults", .packages=packages, .verbose=T) %dopar% {
+# For whatever reason, the first solution doesn't work, so hard-code the vector for now
+#		fns = sapply(ls(), function(element) is.function(eval(as.name(element))))
+#    fnsToExport = names(fns[fns == TRUE])
+#     The code below only passes the 3 hard-coded functions to each of the processes, and ignores the rest of the vector
+#     Not hard-coding anything leads to no function definitions being passed to the parallel processes, resulting in errors
+#    fnsToExport = c("simemChunk", "extractData", "addPrecisionWeights", as.character(fnsToExport))
+    fnsToExport = c("addPrecisionWeights",
+                    "addSignalProbWeights",
+                    "applyFDR",
+                    "assignWeightsToObservations",
+                    "combineResults",
+                    "extractData",
+                    "fitAnova",
+                    "fitIsogenicCovariateGene",
+                    "fitIsogenicCovariateRg",
+                    "fitModel",
+                    "fitModelAndFormatOutput",
+                    "fitPanelCovariateGene",
+                    "fitPanelCovariateRg",
+                    "fitSimplerRandomEffects",
+                    "formatOutput",
+                    "getDefaultVariableMap",
+                    "getMeanSd",
+                    "getMeanVar",
+                    "getMinimalSummary",
+                    "getModelFormulas",
+                    "getModelPValues",
+                    "getRelativeDropout",
+                    "getRelativeDropoutRates",
+                    "getReplicateMeanVar",
+                    "getSignalProb",
+                    "getVarianceWeights",
+                    "loadMeanVar",
+                    "pvaluesNorm",
+                    "pvaluesT",
+                    "resetFactorLevels",
+                    "simem",
+                    "simemAnalysis",
+                    "simemChunk",
+                    "simemIsogenic",
+                    "standardizeColumnNames",
+                    "summaryAnova",
+                    "summaryFitEffectCoefs",
+                    "summaryFitLogLik",
+                    "tryCatchWarningsErrors",
+                    "withinBetweenDF")
+    
+    # Split siMEM processing to multiple processor cores, with a subset of gene ids processed by each core.
+		final = foreach(geneIds=iter(geneIdsList), .combine="combineResults", .packages=packages, .export=fnsToExport, .verbose=T) %dopar% {
 					results <- simemChunk(screens=screens,
 					                      geneIds=geneIds,
 					                      analysisType=analysisType,
@@ -398,6 +448,10 @@ simemAnalysis = function(screens,
 					                      endPoint=endPoint,
 					                      printFreq=NULL);
 		}
+
+		# Clean up once parallel processing complete
+    stopCluster(cl)
+
 	} else {
 		final = simemChunk(screens=screens,
 		                   covariate=covariate,

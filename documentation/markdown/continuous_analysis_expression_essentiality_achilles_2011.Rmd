@@ -12,11 +12,11 @@ Also note that, while the code below uses relative paths, you should edit these 
 ### To install required packages, uncomment and run this
 # source("http://www.bioconductor.org/biocLite.R")
 # biocLite(c("Biobase", "preprocessCore", "genefilter"))
-# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+# install.packages(c("blme", "doParallel", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
 
 suppressPackageStartupMessages(library("Biobase"))
 suppressPackageStartupMessages(library("blme"))
-suppressPackageStartupMessages(library("doMC"))
+suppressPackageStartupMessages(library("doParallel"))
 suppressPackageStartupMessages(library("genefilter"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("locfit"))
@@ -127,6 +127,24 @@ results = simem(achilles,
 ```
 &nbsp;
 
+For illustration purposes, we'll rerun the same code using multiple (2) parallel nodes.
+
+```{r simem_parallel}
+
+
+results = simem(achilles,
+               geneIds=testIds,
+               reagentWeights=hpWeights,
+               annotationsPerId=expr, 
+               analyzeReagents=TRUE,
+               inverseVarianceWeights=TRUE,
+               endPoint=TRUE,
+               parallelNodes=2,
+               variableMap=vars)
+```
+&nbsp;
+
+
 Here are the gene-level summaries (more detailed gene-level results can be obtained using `results$gene_detailed`). The `difference` parameter can be interpreted as the magnitude of the average change in dropout slope associated with each unit increase in the gene's log2 microarray intensity value. In other words, on average the dropout is faster (more negative), indicating increased essentiality, in cell lines with higher expression.
 
 ```{r show_gene}
@@ -143,4 +161,3 @@ options(width=100)
 reagent = results$reagent
 reagent[order(reagent$symbol, reagent$probeset_id), ]
 ```
-

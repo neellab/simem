@@ -118,11 +118,11 @@ $(document).ready(function () {
 <pre class="r"><code>### To install required packages, uncomment and run this
 # source(&quot;http://www.bioconductor.org/biocLite.R&quot;)
 # biocLite(c(&quot;Biobase&quot;, &quot;preprocessCore&quot;, &quot;genefilter&quot;))
-# install.packages(c(&quot;blme&quot;, &quot;doMC&quot;, &quot;ggplot2&quot;, &quot;locfit&quot;, &quot;MASS&quot;, &quot;plyr&quot;, &quot;reshape&quot;))
+# install.packages(c(&quot;blme&quot;, &quot;doParallel&quot;, &quot;ggplot2&quot;, &quot;locfit&quot;, &quot;MASS&quot;, &quot;plyr&quot;, &quot;reshape&quot;))
 
 suppressPackageStartupMessages(library(&quot;Biobase&quot;))
 suppressPackageStartupMessages(library(&quot;blme&quot;))
-suppressPackageStartupMessages(library(&quot;doMC&quot;))
+suppressPackageStartupMessages(library(&quot;doParallel&quot;))
 suppressPackageStartupMessages(library(&quot;genefilter&quot;))
 suppressPackageStartupMessages(library(&quot;ggplot2&quot;))
 suppressPackageStartupMessages(library(&quot;locfit&quot;))
@@ -219,6 +219,30 @@ vars$timeGroup = &quot;timepointIndex&quot;</code></pre>
                parallelNodes=1,
                variableMap=vars)</code></pre>
 <p> </p>
+<p>For illustration purposes, we’ll rerun the same code using multiple (2) parallel nodes.</p>
+<pre class="r"><code>results = simem(achilles,
+               geneIds=testIds,
+               reagentWeights=hpWeights,
+               annotationsPerId=expr, 
+               analyzeReagents=TRUE,
+               inverseVarianceWeights=TRUE,
+               endPoint=TRUE,
+               parallelNodes=2,
+               variableMap=vars)</code></pre>
+<pre><code>## automatically exporting the following variables from the local environment:
+##   analysisType, analyzeReagents, annotationsPerCellLine, annotationsPerId, calculateRelativeDropout, cellLineWeights, covariate, covariateFactorOrder, endPoint, formulas, inverseVarianceWeights, modelEngine, pvalueType, reagentWeights, screens, signalProbWeights, variableMap 
+## explicitly exporting variables(s): addPrecisionWeights, addSignalProbWeights, applyFDR, assignWeightsToObservations, combineResults, extractData, fitAnova, fitIsogenicCovariateGene, fitIsogenicCovariateRg, fitModel, fitModelAndFormatOutput, fitPanelCovariateGene, fitPanelCovariateRg, fitSimplerRandomEffects, formatOutput, getDefaultVariableMap, getMeanSd, getMeanVar, getMinimalSummary, getModelFormulas, getModelPValues, getRelativeDropout, getRelativeDropoutRates, getReplicateMeanVar, getSignalProb, getVarianceWeights, loadMeanVar, pvaluesNorm, pvaluesT, resetFactorLevels, simem, simemAnalysis, simemChunk, simemIsogenic, standardizeColumnNames, summaryAnova, summaryFitEffectCoefs, summaryFitLogLik, tryCatchWarningsErrors, withinBetweenDF
+## numValues: 2, numResults: 0, stopped: TRUE
+## got results for task 1
+## numValues: 2, numResults: 1, stopped: TRUE
+## returning status FALSE
+## got results for task 2
+## numValues: 2, numResults: 2, stopped: TRUE
+## first call to combine function
+## evaluating call object to combine results:
+##   fun(result.1, result.2)
+## returning status TRUE</code></pre>
+<p> </p>
 <p>Here are the gene-level summaries (more detailed gene-level results can be obtained using <code>results$gene_detailed</code>). The <code>difference</code> parameter can be interpreted as the magnitude of the average change in dropout slope associated with each unit increase in the gene’s log2 microarray intensity value. In other words, on average the dropout is faster (more negative), indicating increased essentiality, in cell lines with higher expression.</p>
 <pre class="r"><code>options(width=100)
 
@@ -234,30 +258,30 @@ results$gene</code></pre>
 reagent = results$reagent
 reagent[order(reagent$symbol, reagent$probeset_id), ]</code></pre>
 <pre><code>##           probeset_id gene_id symbol   difference       pvalue          fdr warnings errors
-## 17 TRCN0000033499m_st     598 BCL2L1 -1.084601359 1.328498e-07 7.970986e-07                
-## 18 TRCN0000033500m_st     598 BCL2L1 -0.570923603 2.085288e-05 1.000938e-04                
-## 19 TRCN0000033501m_st     598 BCL2L1 -0.225331047 8.695563e-02 1.739113e-01                
-## 20 TRCN0000033502m_st     598 BCL2L1 -0.253058519 1.634092e-01 2.385993e-01                
-## 21 TRCN0000033503m_st     598 BCL2L1 -0.127568563 1.417070e-01 2.267312e-01                
+## 7  TRCN0000033499m_st     598 BCL2L1 -1.084601359 1.328498e-07 7.970986e-07                
+## 8  TRCN0000033500m_st     598 BCL2L1 -0.570923603 2.085288e-05 1.000938e-04                
+## 9  TRCN0000033501m_st     598 BCL2L1 -0.225331047 8.695563e-02 1.739113e-01                
+## 10 TRCN0000033502m_st     598 BCL2L1 -0.253058519 1.634092e-01 2.385993e-01                
+## 11 TRCN0000033503m_st     598 BCL2L1 -0.127568563 1.417070e-01 2.267312e-01                
 ## 1  TRCN0000010369m_st    3845   KRAS -0.182540262 5.705246e-02 1.244781e-01                
 ## 2  TRCN0000018337m_st    3845   KRAS -0.101807686 1.234060e-01 2.115532e-01                
-## 13 TRCN0000033259m_st    3845   KRAS -0.704177541 9.220785e-09 7.376628e-08                
-## 14 TRCN0000033260m_st    3845   KRAS -0.389424485 3.798133e-03 1.139440e-02                
-## 15 TRCN0000033261m_st    3845   KRAS -0.069402072 4.609164e-01 5.530996e-01                
-## 16 TRCN0000033263m_st    3845   KRAS  0.006208942 9.613397e-01 9.613397e-01                
-## 22 TRCN0000040150m_st    3845   KRAS -0.129222825 1.690078e-01 2.385993e-01                
-## 23 TRCN0000040151m_st    3845   KRAS  0.048893350 7.293661e-01 7.610777e-01                
-## 24 TRCN0000040152m_st    3845   KRAS -0.449105840 1.390005e-02 3.706681e-02                
-## 8  TRCN0000021274m_st    7849   PAX8 -0.089940851 4.842104e-02 1.162105e-01                
-## 9  TRCN0000021275m_st    7849   PAX8  0.040427702 2.591113e-01 3.454817e-01                
-## 10 TRCN0000021276m_st    7849   PAX8 -0.020082596 5.432624e-01 6.159332e-01                
-## 11 TRCN0000021277m_st    7849   PAX8 -0.058332023 1.200286e-01 2.115532e-01                
-## 12 TRCN0000021278m_st    7849   PAX8 -0.335958596 2.230537e-10 2.676644e-09                
-## 3  TRCN0000018984m_st    6663  SOX10 -1.126964461 6.338370e-14 1.521209e-12                
-## 4  TRCN0000018985m_st    6663  SOX10 -0.435469574 2.512846e-04 9.216024e-04                
-## 5  TRCN0000018986m_st    6663  SOX10 -0.078974328 5.646055e-01 6.159332e-01                
-## 6  TRCN0000018987m_st    6663  SOX10 -0.120424704 4.226760e-01 5.339065e-01                
-## 7  TRCN0000018988m_st    6663  SOX10 -0.693519719 2.688007e-04 9.216024e-04</code></pre>
+## 3  TRCN0000033259m_st    3845   KRAS -0.704177541 9.220785e-09 7.376628e-08                
+## 4  TRCN0000033260m_st    3845   KRAS -0.389424485 3.798133e-03 1.139440e-02                
+## 5  TRCN0000033261m_st    3845   KRAS -0.069402072 4.609164e-01 5.530996e-01                
+## 6  TRCN0000033263m_st    3845   KRAS  0.006208942 9.613397e-01 9.613397e-01                
+## 12 TRCN0000040150m_st    3845   KRAS -0.129222825 1.690078e-01 2.385993e-01                
+## 13 TRCN0000040151m_st    3845   KRAS  0.048893350 7.293661e-01 7.610777e-01                
+## 14 TRCN0000040152m_st    3845   KRAS -0.449105840 1.390005e-02 3.706681e-02                
+## 20 TRCN0000021274m_st    7849   PAX8 -0.089940851 4.842104e-02 1.162105e-01                
+## 21 TRCN0000021275m_st    7849   PAX8  0.040427702 2.591113e-01 3.454817e-01                
+## 22 TRCN0000021276m_st    7849   PAX8 -0.020082596 5.432624e-01 6.159332e-01                
+## 23 TRCN0000021277m_st    7849   PAX8 -0.058332023 1.200286e-01 2.115532e-01                
+## 24 TRCN0000021278m_st    7849   PAX8 -0.335958596 2.230537e-10 2.676644e-09                
+## 15 TRCN0000018984m_st    6663  SOX10 -1.126964461 6.338370e-14 1.521209e-12                
+## 16 TRCN0000018985m_st    6663  SOX10 -0.435469574 2.512846e-04 9.216024e-04                
+## 17 TRCN0000018986m_st    6663  SOX10 -0.078974328 5.646055e-01 6.159332e-01                
+## 18 TRCN0000018987m_st    6663  SOX10 -0.120424704 4.226760e-01 5.339065e-01                
+## 19 TRCN0000018988m_st    6663  SOX10 -0.693519719 2.688007e-04 9.216024e-04</code></pre>
 </div>
 
 

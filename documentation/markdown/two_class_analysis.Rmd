@@ -14,11 +14,11 @@ Also note that, while the code below uses relative paths, you should edit these 
 ### To install required packages, uncomment and run this
 # source("http://www.bioconductor.org/biocLite.R")
 # biocLite(c("Biobase", "preprocessCore", "genefilter"))
-# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+# install.packages(c("blme", "doParallel", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
 
 suppressPackageStartupMessages(library("Biobase"))
 suppressPackageStartupMessages(library("blme"))
-suppressPackageStartupMessages(library("doMC"))
+suppressPackageStartupMessages(library("doParallel"))
 suppressPackageStartupMessages(library("genefilter"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("locfit"))
@@ -97,7 +97,7 @@ signalingPathway = c(207,   #AKT1
 ```
 &nbsp;
 
-If we want to perform a genome-wide analysis, simply omit the `geneIds = signalingPathway` parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 6 processor cores, for example, specify the `parallelNodes = 6` parameter. This option is only available on Linux or OS X at present.
+If we want to perform a genome-wide analysis, simply omit the `geneIds = signalingPathway` parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 3 processor cores, for example, specify the `parallelNodes = 3` parameter. This option is available on systems with multiple processor cores, whether running Windows, Linux, or Mac OS X. This is done using the `doParallel` R package.
 
 &nbsp;
 
@@ -122,6 +122,25 @@ results = simem(screens = breast_screens,
                 )
 ```
 &nbsp;
+
+For illustration purposes, we'll rerun the above code using multiple (3) parallel processor cores, taking advantage of the capabilities provided by the `doParallel` package.
+
+```{r simem_parallel}
+
+results = simem(screens = breast_screens,
+                geneIds = signalingPathway,
+                covariate = "erbb2",
+                reagentWeights = hpWeights,
+                annotationsPerCellLine = status,
+                inverseVarianceWeights = TRUE,
+                signalProbWeights = TRUE,
+                analyzeReagents = TRUE,
+                covariateFactorOrder = c("other", "her2"), 
+                parallelNodes = 3
+                )
+```
+&nbsp;
+
 
 Most users will be interested in the summarized per-gene context-specific essentiality predictions
 
