@@ -120,11 +120,11 @@ $(document).ready(function () {
 <pre class="r"><code>### To install required packages, uncomment and run this
 # source(&quot;http://www.bioconductor.org/biocLite.R&quot;)
 # biocLite(c(&quot;Biobase&quot;, &quot;preprocessCore&quot;, &quot;genefilter&quot;))
-# install.packages(c(&quot;blme&quot;, &quot;doMC&quot;, &quot;ggplot2&quot;, &quot;locfit&quot;, &quot;MASS&quot;, &quot;plyr&quot;, &quot;reshape&quot;))
+# install.packages(c(&quot;blme&quot;, &quot;doParallel&quot;, &quot;ggplot2&quot;, &quot;locfit&quot;, &quot;MASS&quot;, &quot;plyr&quot;, &quot;reshape&quot;))
 
 suppressPackageStartupMessages(library(&quot;Biobase&quot;))
 suppressPackageStartupMessages(library(&quot;blme&quot;))
-suppressPackageStartupMessages(library(&quot;doMC&quot;))
+suppressPackageStartupMessages(library(&quot;doParallel&quot;))
 suppressPackageStartupMessages(library(&quot;genefilter&quot;))
 suppressPackageStartupMessages(library(&quot;ggplot2&quot;))
 suppressPackageStartupMessages(library(&quot;locfit&quot;))
@@ -201,7 +201,7 @@ status[1:10,]</code></pre>
                     25803, #SPDEF
                     7022) #TFAP2C</code></pre>
 <p> </p>
-<p>If we want to perform a genome-wide analysis, simply omit the <code>geneIds = signalingPathway</code> parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 6 processor cores, for example, specify the <code>parallelNodes = 6</code> parameter. This option is only available on Linux or OS X at present.</p>
+<p>If we want to perform a genome-wide analysis, simply omit the <code>geneIds = signalingPathway</code> parameter. This analysis typically takes ~18 hours, but the computation type can be dramatically reduced by parallelizing the modeling process on multiple processor cores (when available). To use 3 processor cores, for example, specify the <code>parallelNodes = 3</code> parameter. This option is available on systems with multiple processor cores, whether running Windows, Linux, or Mac OS X. This is done using the <code>doParallel</code> R package.</p>
 <p> </p>
 <p>If we specify an analysis using both precision and signal-noise measurement weights (<code>inverseVarianceWeights = TRUE</code> and <code>signalProbWeights = TRUE</code> parameters, respectively), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
 <p> </p>
@@ -218,6 +218,38 @@ status[1:10,]</code></pre>
                 parallelNodes = 1
                 )</code></pre>
 <p> </p>
+<p>For illustration purposes, we’ll rerun the above code using multiple (3) parallel processor cores, taking advantage of the capabilities provided by the <code>doParallel</code> package.</p>
+<pre class="r"><code>results = simem(screens = breast_screens,
+                geneIds = signalingPathway,
+                covariate = &quot;erbb2&quot;,
+                reagentWeights = hpWeights,
+                annotationsPerCellLine = status,
+                inverseVarianceWeights = TRUE,
+                signalProbWeights = TRUE,
+                analyzeReagents = TRUE,
+                covariateFactorOrder = c(&quot;other&quot;, &quot;her2&quot;), 
+                parallelNodes = 3
+                )</code></pre>
+<pre><code>## automatically exporting the following variables from the local environment:
+##   analysisType, analyzeReagents, annotationsPerCellLine, annotationsPerId, calculateRelativeDropout, cellLineWeights, covariate, covariateFactorOrder, endPoint, formulas, inverseVarianceWeights, modelEngine, pvalueType, reagentWeights, screens, signalProbWeights, variableMap 
+## explicitly exporting variables(s): addPrecisionWeights, addSignalProbWeights, applyFDR, assignWeightsToObservations, combineResults, extractData, fitAnova, fitIsogenicCovariateGene, fitIsogenicCovariateRg, fitModel, fitModelAndFormatOutput, fitPanelCovariateGene, fitPanelCovariateRg, fitSimplerRandomEffects, formatOutput, getDefaultVariableMap, getMeanSd, getMeanVar, getMinimalSummary, getModelFormulas, getModelPValues, getRelativeDropout, getRelativeDropoutRates, getReplicateMeanVar, getSignalProb, getVarianceWeights, loadMeanVar, pvaluesNorm, pvaluesT, resetFactorLevels, simem, simemAnalysis, simemChunk, simemIsogenic, standardizeColumnNames, summaryAnova, summaryFitEffectCoefs, summaryFitLogLik, tryCatchWarningsErrors, withinBetweenDF
+## numValues: 3, numResults: 0, stopped: TRUE
+## got results for task 1
+## numValues: 3, numResults: 1, stopped: TRUE
+## returning status FALSE
+## got results for task 2
+## numValues: 3, numResults: 2, stopped: TRUE
+## first call to combine function
+## evaluating call object to combine results:
+##   fun(result.1, result.2)
+## returning status FALSE
+## got results for task 3
+## numValues: 3, numResults: 3, stopped: TRUE
+## calling combine function
+## evaluating call object to combine results:
+##   fun(accum, result.3)
+## returning status TRUE</code></pre>
+<p> </p>
 <p>Most users will be interested in the summarized per-gene context-specific essentiality predictions</p>
 <pre class="r"><code>options(width=100)
 
@@ -225,37 +257,37 @@ results$gene</code></pre>
 <pre><code>##    gene_id  symbol difference_her2  pvalue_her2     fdr_her2 warnings errors
 ## 1      207    AKT1      -0.2487231 1.833014e-05 3.055023e-05                
 ## 2     2064   ERBB2      -0.9193892 6.631059e-19 1.657765e-18                
-## 3     2065   ERBB3      -0.7649524 4.448219e-20 1.482740e-19                
-## 4     2475    MTOR      -0.3807791 5.496490e-04 5.496490e-04                
-## 5     5290  PIK3CA      -0.2946384 2.627995e-05 3.754279e-05                
-## 6     6009    RHEB      -0.2215384 1.622149e-04 1.959450e-04                
-## 7     7022  TFAP2C      -0.6540656 1.522445e-16 3.044890e-16                
-## 8    11140   CDC37      -1.3959328 1.029777e-22 1.029777e-21                
-## 9    25803   SPDEF      -1.3666388 5.948035e-21 2.974018e-20                
-## 10   55914 ERBB2IP      -0.4401642 1.763505e-04 1.959450e-04</code></pre>
+## 3    11140   CDC37      -1.3959328 1.029777e-22 1.029777e-21                
+## 4    55914 ERBB2IP      -0.4401642 1.763505e-04 1.959450e-04                
+## 5     2065   ERBB3      -0.7649524 4.448219e-20 1.482740e-19                
+## 6     2475    MTOR      -0.3807791 5.496490e-04 5.496490e-04                
+## 7     5290  PIK3CA      -0.2946384 2.627995e-05 3.754279e-05                
+## 8     6009    RHEB      -0.2215384 1.622149e-04 1.959450e-04                
+## 9     7022  TFAP2C      -0.6540656 1.522445e-16 3.044890e-16                
+## 10   25803   SPDEF      -1.3666388 5.948035e-21 2.974018e-20</code></pre>
 <p> </p>
 <p>If you want to examine more parameters for each gene, including model fit statistics, std. errors and such, examine the “gene_detailed” data frame.</p>
 <pre class="r"><code>str(results$gene_detailed)</code></pre>
 <pre><code>## 'data.frame':    10 obs. of  21 variables:
-##  $ gene_id         : int  207 2064 2065 2475 5290 6009 7022 11140 25803 55914
-##  $ symbol          : chr  &quot;AKT1&quot; &quot;ERBB2&quot; &quot;ERBB3&quot; &quot;MTOR&quot; ...
-##  $ AIC             : num  9120 3226 10715 5977 6526 ...
-##  $ logLik          : num  -4550 -1603 -5347 -2978 -3253 ...
-##  $ intercept       : num  11.2 11.5 10.9 11.2 11.1 ...
-##  $ se_intercept    : num  0.272 0.32 0.241 0.17 0.279 ...
-##  $ t_intercept     : num  41.1 36 45.1 66.2 39.8 ...
-##  $ baseline_trend  : num  -0.475 -0.484 -0.716 -1.149 -0.513 ...
-##  $ se_baseline     : num  0.122 0.303 0.234 0.412 0.144 ...
-##  $ t_baseline      : num  -3.88 -1.59 -3.06 -2.79 -3.56 ...
-##  $ difference_her2 : num  -0.249 -0.919 -0.765 -0.381 -0.295 ...
-##  $ se_her2         : num  0.0581 0.1035 0.0834 0.1102 0.0701 ...
-##  $ t_her2          : num  -4.28 -8.88 -9.18 -3.46 -4.2 ...
-##  $ pvalue_intercept: num  0.00 3.88e-283 0.00 0.00 0.00 ...
-##  $ pvalue_baseline : num  0.000103 0.110771 0.002224 0.005237 0.000374 ...
-##  $ pvalue_her2     : num  1.83e-05 6.63e-19 4.45e-20 5.50e-04 2.63e-05 ...
-##  $ fdr_intercept   : num  0.00 5.55e-283 0.00 0.00 0.00 ...
-##  $ fdr_baseline    : num  0.000342 0.110771 0.003707 0.007482 0.000749 ...
-##  $ fdr_her2        : num  3.06e-05 1.66e-18 1.48e-19 5.50e-04 3.75e-05 ...
+##  $ gene_id         : int  207 2064 11140 55914 2065 2475 5290 6009 7022 25803
+##  $ symbol          : chr  &quot;AKT1&quot; &quot;ERBB2&quot; &quot;CDC37&quot; &quot;ERBB2IP&quot; ...
+##  $ AIC             : num  9120 3226 10087 6208 10715 ...
+##  $ logLik          : num  -4550 -1603 -5033 -3094 -5347 ...
+##  $ intercept       : num  11.17 11.49 9.78 10.76 10.87 ...
+##  $ se_intercept    : num  0.272 0.32 0.275 0.522 0.241 ...
+##  $ t_intercept     : num  41.1 36 35.6 20.6 45.1 ...
+##  $ baseline_trend  : num  -0.475 -0.484 -1.16 -1.05 -0.716 ...
+##  $ se_baseline     : num  0.122 0.303 0.234 0.463 0.234 ...
+##  $ t_baseline      : num  -3.88 -1.59 -4.97 -2.27 -3.06 ...
+##  $ difference_her2 : num  -0.249 -0.919 -1.396 -0.44 -0.765 ...
+##  $ se_her2         : num  0.0581 0.1035 0.1423 0.1174 0.0834 ...
+##  $ t_her2          : num  -4.28 -8.88 -9.81 -3.75 -9.18 ...
+##  $ pvalue_intercept: num  0.00 3.88e-283 6.06e-278 2.61e-94 0.00 ...
+##  $ pvalue_baseline : num  1.03e-04 1.11e-01 6.83e-07 2.33e-02 2.22e-03 ...
+##  $ pvalue_her2     : num  1.83e-05 6.63e-19 1.03e-22 1.76e-04 4.45e-20 ...
+##  $ fdr_intercept   : num  0.00 5.55e-283 7.58e-278 2.61e-94 0.00 ...
+##  $ fdr_baseline    : num  3.42e-04 1.11e-01 5.82e-06 2.91e-02 3.71e-03 ...
+##  $ fdr_her2        : num  3.06e-05 1.66e-18 1.03e-21 1.96e-04 1.48e-19 ...
 ##  $ warnings        : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
 ##  $ errors          : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...</code></pre>
 <p> </p>
@@ -264,87 +296,87 @@ results$gene</code></pre>
 reagent = results$reagent
 reagent[order(reagent$symbol, reagent$trcn_id), ]</code></pre>
 <pre><code>##           trcn_id gene_id  symbol difference_her2  pvalue_her2     fdr_her2 warnings errors
-## 6  TRCN0000010162     207    AKT1    -0.419761291 5.617597e-02 9.148658e-02                
-## 7  TRCN0000010163     207    AKT1    -0.327417257 2.099172e-02 3.739149e-02                
-## 8  TRCN0000010171     207    AKT1     0.125861923 2.602783e-01 3.090805e-01                
-## 9  TRCN0000010174     207    AKT1    -0.951879394 7.217605e-04 1.870016e-03                
-## 41 TRCN0000039793     207    AKT1    -0.212658086 5.246260e-02 8.795201e-02                
-## 42 TRCN0000039794     207    AKT1    -0.306170521 7.817994e-03 1.485419e-02                
-## 43 TRCN0000039796     207    AKT1     0.052942041 4.500835e-01 4.933607e-01                
-## 44 TRCN0000039797     207    AKT1    -0.408935096 1.448935e-01 1.862583e-01                
-## 53 TRCN0000116632   11140   CDC37    -0.338810826 1.136410e-01 1.579887e-01                
-## 54 TRCN0000116633   11140   CDC37    -1.741620517 2.143741e-11 4.073107e-10                
-## 55 TRCN0000116634   11140   CDC37    -1.342011697 2.127244e-08 1.732184e-07                
-## 56 TRCN0000116635   11140   CDC37    -2.138160064 2.549092e-06 1.210819e-05                
-## 57 TRCN0000116636   11140   CDC37    -1.633741295 4.395037e-06 1.927055e-05                
-## 10 TRCN0000010341    2064   ERBB2    -0.791620224 1.094697e-03 2.712944e-03                
-## 11 TRCN0000010342    2064   ERBB2    -3.063583735 1.639043e-20 9.342543e-19                
-## 12 TRCN0000010343    2064   ERBB2    -0.595747496 3.416488e-08 2.434248e-07                
-## 45 TRCN0000039881    2064   ERBB2    -0.089827463 2.075710e-01 2.517350e-01                
-## 49 TRCN0000059068   55914 ERBB2IP    -0.148830578 1.414368e-01 1.862583e-01                
-## 50 TRCN0000059070   55914 ERBB2IP    -0.836410166 5.959154e-02 9.435328e-02                
-## 51 TRCN0000059071   55914 ERBB2IP    -1.146687334 2.066879e-08 1.732184e-07                
-## 52 TRCN0000059072   55914 ERBB2IP    -0.007772918 9.744257e-01 9.744257e-01                
-## 1  TRCN0000000621    2065   ERBB3    -0.310389994 3.317891e-01 3.708231e-01                
-## 2  TRCN0000000622    2065   ERBB3    -1.334270423 2.036181e-03 4.835929e-03                
-## 3  TRCN0000000623    2065   ERBB3    -0.547303371 5.176516e-04 1.405054e-03                
-## 4  TRCN0000009835    2065   ERBB3    -0.477514801 6.307659e-09 7.190731e-08                
-## 13 TRCN0000010344    2065   ERBB3    -0.493352834 7.914763e-05 2.819634e-04                
-## 21 TRCN0000018327    2065   ERBB3    -0.969681073 4.214089e-07 2.183665e-06                
-## 46 TRCN0000040108    2065   ERBB3    -0.154748272 6.824567e-03 1.440742e-02                
-## 47 TRCN0000040109    2065   ERBB3    -1.743516108 3.257401e-04 9.772204e-04                
-## 48 TRCN0000040111    2065   ERBB3    -0.804393190 7.305351e-03 1.453363e-02                
-## 36 TRCN0000039783    2475    MTOR    -0.837461694 7.394303e-03 1.453363e-02                
-## 37 TRCN0000039784    2475    MTOR    -0.391953744 6.887123e-02 1.033068e-01                
-## 38 TRCN0000039785    2475    MTOR    -0.418043167 3.031553e-01 3.455971e-01                
-## 39 TRCN0000039786    2475    MTOR    -0.232521844 1.470461e-01 1.862583e-01                
-## 40 TRCN0000039787    2475    MTOR    -0.051301319 6.478652e-01 6.838577e-01                
-## 14 TRCN0000010406    5290  PIK3CA    -0.791327708 2.105246e-04 6.666612e-04                
-## 15 TRCN0000010407    5290  PIK3CA    -0.554117305 1.080427e-05 4.105623e-05                
-## 31 TRCN0000039603    5290  PIK3CA    -0.481590653 1.230855e-01 1.670446e-01                
-## 32 TRCN0000039604    5290  PIK3CA     0.353946393 1.674254e-01 2.074620e-01                
-## 33 TRCN0000039605    5290  PIK3CA     0.009020816 9.399385e-01 9.567231e-01                
-## 34 TRCN0000039606    5290  PIK3CA    -0.212789156 2.968663e-01 3.453343e-01                
-## 35 TRCN0000039607    5290  PIK3CA    -0.316462178 1.169692e-07 7.408051e-07                
-## 5  TRCN0000009865    6009    RHEB    -0.377844048 7.584068e-02 1.080730e-01                
-## 16 TRCN0000010424    6009    RHEB    -0.630127955 2.081122e-02 3.739149e-02                
-## 17 TRCN0000010425    6009    RHEB    -0.390649978 4.517398e-02 7.802778e-02                
-## 27 TRCN0000039599    6009    RHEB    -0.131953209 6.613566e-02 1.018847e-01                
-## 28 TRCN0000039600    6009    RHEB    -0.020736415 7.991316e-01 8.281909e-01                
-## 29 TRCN0000039601    6009    RHEB    -0.321263801 7.307593e-02 1.068033e-01                
-## 30 TRCN0000039602    6009    RHEB     0.063758034 5.867099e-01 6.309899e-01                
-## 18 TRCN0000016548   25803   SPDEF    -1.190427459 2.096109e-12 5.973911e-11                
-## 19 TRCN0000016550   25803   SPDEF    -1.111681068 7.229684e-06 2.943514e-05                
-## 20 TRCN0000016551   25803   SPDEF    -1.776043253 1.356210e-07 7.730395e-07                
-## 22 TRCN0000019744    7022  TFAP2C    -0.232969287 3.623088e-04 1.032580e-03                
-## 23 TRCN0000019745    7022  TFAP2C    -0.501144404 5.371469e-03 1.177591e-02                
-## 24 TRCN0000019746    7022  TFAP2C    -1.740871491 2.487981e-09 3.545373e-08                
-## 25 TRCN0000019747    7022  TFAP2C    -0.518505932 1.091727e-04 3.660496e-04                
-## 26 TRCN0000019748    7022  TFAP2C    -0.429511255 2.531160e-03 5.771044e-03</code></pre>
+## 1  TRCN0000010162     207    AKT1    -0.419761291 5.617597e-02 9.148658e-02                
+## 2  TRCN0000010163     207    AKT1    -0.327417257 2.099172e-02 3.739149e-02                
+## 3  TRCN0000010171     207    AKT1     0.125861923 2.602783e-01 3.090805e-01                
+## 4  TRCN0000010174     207    AKT1    -0.951879394 7.217605e-04 1.870016e-03                
+## 8  TRCN0000039793     207    AKT1    -0.212658086 5.246260e-02 8.795201e-02                
+## 9  TRCN0000039794     207    AKT1    -0.306170521 7.817994e-03 1.485419e-02                
+## 10 TRCN0000039796     207    AKT1     0.052942041 4.500835e-01 4.933607e-01                
+## 11 TRCN0000039797     207    AKT1    -0.408935096 1.448935e-01 1.862583e-01                
+## 17 TRCN0000116632   11140   CDC37    -0.338810826 1.136410e-01 1.579887e-01                
+## 18 TRCN0000116633   11140   CDC37    -1.741620517 2.143741e-11 4.073107e-10                
+## 19 TRCN0000116634   11140   CDC37    -1.342011697 2.127244e-08 1.732184e-07                
+## 20 TRCN0000116635   11140   CDC37    -2.138160064 2.549092e-06 1.210819e-05                
+## 21 TRCN0000116636   11140   CDC37    -1.633741295 4.395037e-06 1.927055e-05                
+## 5  TRCN0000010341    2064   ERBB2    -0.791620224 1.094697e-03 2.712944e-03                
+## 6  TRCN0000010342    2064   ERBB2    -3.063583735 1.639043e-20 9.342543e-19                
+## 7  TRCN0000010343    2064   ERBB2    -0.595747496 3.416488e-08 2.434248e-07                
+## 12 TRCN0000039881    2064   ERBB2    -0.089827463 2.075710e-01 2.517350e-01                
+## 13 TRCN0000059068   55914 ERBB2IP    -0.148830578 1.414368e-01 1.862583e-01                
+## 14 TRCN0000059070   55914 ERBB2IP    -0.836410166 5.959154e-02 9.435328e-02                
+## 15 TRCN0000059071   55914 ERBB2IP    -1.146687334 2.066879e-08 1.732184e-07                
+## 16 TRCN0000059072   55914 ERBB2IP    -0.007772918 9.744257e-01 9.744257e-01                
+## 22 TRCN0000000621    2065   ERBB3    -0.310389994 3.317891e-01 3.708231e-01                
+## 23 TRCN0000000622    2065   ERBB3    -1.334270423 2.036181e-03 4.835929e-03                
+## 24 TRCN0000000623    2065   ERBB3    -0.547303371 5.176516e-04 1.405054e-03                
+## 25 TRCN0000009835    2065   ERBB3    -0.477514801 6.307659e-09 7.190731e-08                
+## 27 TRCN0000010344    2065   ERBB3    -0.493352834 7.914763e-05 2.819634e-04                
+## 32 TRCN0000018327    2065   ERBB3    -0.969681073 4.214089e-07 2.183665e-06                
+## 47 TRCN0000040108    2065   ERBB3    -0.154748272 6.824567e-03 1.440742e-02                
+## 48 TRCN0000040109    2065   ERBB3    -1.743516108 3.257401e-04 9.772204e-04                
+## 49 TRCN0000040111    2065   ERBB3    -0.804393190 7.305351e-03 1.453363e-02                
+## 42 TRCN0000039783    2475    MTOR    -0.837461694 7.394303e-03 1.453363e-02                
+## 43 TRCN0000039784    2475    MTOR    -0.391953744 6.887123e-02 1.033068e-01                
+## 44 TRCN0000039785    2475    MTOR    -0.418043167 3.031553e-01 3.455971e-01                
+## 45 TRCN0000039786    2475    MTOR    -0.232521844 1.470461e-01 1.862583e-01                
+## 46 TRCN0000039787    2475    MTOR    -0.051301319 6.478652e-01 6.838577e-01                
+## 28 TRCN0000010406    5290  PIK3CA    -0.791327708 2.105246e-04 6.666612e-04                
+## 29 TRCN0000010407    5290  PIK3CA    -0.554117305 1.080427e-05 4.105623e-05                
+## 37 TRCN0000039603    5290  PIK3CA    -0.481590653 1.230855e-01 1.670446e-01                
+## 38 TRCN0000039604    5290  PIK3CA     0.353946393 1.674254e-01 2.074620e-01                
+## 39 TRCN0000039605    5290  PIK3CA     0.009020816 9.399385e-01 9.567231e-01                
+## 40 TRCN0000039606    5290  PIK3CA    -0.212789156 2.968663e-01 3.453343e-01                
+## 41 TRCN0000039607    5290  PIK3CA    -0.316462178 1.169692e-07 7.408051e-07                
+## 26 TRCN0000009865    6009    RHEB    -0.377844048 7.584068e-02 1.080730e-01                
+## 30 TRCN0000010424    6009    RHEB    -0.630127955 2.081122e-02 3.739149e-02                
+## 31 TRCN0000010425    6009    RHEB    -0.390649978 4.517398e-02 7.802778e-02                
+## 33 TRCN0000039599    6009    RHEB    -0.131953209 6.613566e-02 1.018847e-01                
+## 34 TRCN0000039600    6009    RHEB    -0.020736415 7.991316e-01 8.281909e-01                
+## 35 TRCN0000039601    6009    RHEB    -0.321263801 7.307593e-02 1.068033e-01                
+## 36 TRCN0000039602    6009    RHEB     0.063758034 5.867099e-01 6.309899e-01                
+## 50 TRCN0000016548   25803   SPDEF    -1.190427459 2.096109e-12 5.973911e-11                
+## 51 TRCN0000016550   25803   SPDEF    -1.111681068 7.229684e-06 2.943514e-05                
+## 52 TRCN0000016551   25803   SPDEF    -1.776043253 1.356210e-07 7.730395e-07                
+## 53 TRCN0000019744    7022  TFAP2C    -0.232969287 3.623088e-04 1.032580e-03                
+## 54 TRCN0000019745    7022  TFAP2C    -0.501144404 5.371469e-03 1.177591e-02                
+## 55 TRCN0000019746    7022  TFAP2C    -1.740871491 2.487981e-09 3.545373e-08                
+## 56 TRCN0000019747    7022  TFAP2C    -0.518505932 1.091727e-04 3.660496e-04                
+## 57 TRCN0000019748    7022  TFAP2C    -0.429511255 2.531160e-03 5.771044e-03</code></pre>
 <p> </p>
 <p>and detailed versions.</p>
 <pre class="r"><code>str(results$reagent_detailed)</code></pre>
 <pre><code>## 'data.frame':    57 obs. of  22 variables:
-##  $ trcn_id         : chr  &quot;TRCN0000000621&quot; &quot;TRCN0000000622&quot; &quot;TRCN0000000623&quot; &quot;TRCN0000009835&quot; ...
-##  $ gene_id         : int  2065 2065 2065 2065 6009 207 207 207 207 2064 ...
-##  $ symbol          : chr  &quot;ERBB3&quot; &quot;ERBB3&quot; &quot;ERBB3&quot; &quot;ERBB3&quot; ...
-##  $ AIC             : num  1949 1787 1115 303 1412 ...
-##  $ logLik          : num  -967 -887 -551 -144 -699 ...
-##  $ intercept       : num  9.48 10.91 11.18 11.52 10.06 ...
-##  $ se_intercept    : num  0.0351 0.0233 0.0192 0.0306 0.0495 ...
-##  $ t_intercept     : num  270 469 582 377 203 ...
-##  $ baseline_trend  : num  -1.594 -1.686 -0.384 -0.119 -0.534 ...
-##  $ se_baseline     : num  0.1225 0.1643 0.0556 0.029 0.0804 ...
-##  $ t_baseline      : num  -13.01 -10.26 -6.9 -4.12 -6.64 ...
-##  $ difference_her2 : num  -0.31 -1.334 -0.547 -0.478 -0.378 ...
-##  $ se_her2         : num  0.3198 0.4325 0.1577 0.0822 0.2128 ...
-##  $ t_her2          : num  -0.971 -3.085 -3.471 -5.808 -1.775 ...
+##  $ trcn_id         : chr  &quot;TRCN0000010162&quot; &quot;TRCN0000010163&quot; &quot;TRCN0000010171&quot; &quot;TRCN0000010174&quot; ...
+##  $ gene_id         : int  207 207 207 207 2064 2064 2064 207 207 207 ...
+##  $ symbol          : chr  &quot;AKT1&quot; &quot;AKT1&quot; &quot;AKT1&quot; &quot;AKT1&quot; ...
+##  $ AIC             : num  1086 565 1094 1811 1166 ...
+##  $ logLik          : num  -536 -275 -540 -899 -576 ...
+##  $ intercept       : num  11.7 11.8 11.4 10.1 11 ...
+##  $ se_intercept    : num  0.0204 0.0158 0.0599 0.0857 0.0298 ...
+##  $ t_intercept     : num  575 748 190 118 370 ...
+##  $ baseline_trend  : num  -0.84 -0.68 -0.117 -0.918 -1.12 ...
+##  $ se_baseline     : num  0.0824 0.0542 0.0466 0.1035 0.092 ...
+##  $ t_baseline      : num  -10.2 -12.54 -2.51 -8.87 -12.17 ...
+##  $ difference_her2 : num  -0.42 -0.327 0.126 -0.952 -0.792 ...
+##  $ se_her2         : num  0.22 0.142 0.112 0.282 0.242 ...
+##  $ t_her2          : num  -1.91 -2.31 1.13 -3.38 -3.26 ...
 ##  $ pvalue_intercept: num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ pvalue_baseline : num  1.03e-38 1.03e-24 5.25e-12 3.85e-05 3.22e-11 ...
-##  $ pvalue_her2     : num  3.32e-01 2.04e-03 5.18e-04 6.31e-09 7.58e-02 ...
+##  $ pvalue_baseline : num  2.08e-24 4.70e-36 1.19e-02 7.45e-19 4.31e-34 ...
+##  $ pvalue_her2     : num  0.056176 0.020992 0.260278 0.000722 0.001095 ...
 ##  $ fdr_intercept   : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ fdr_baseline    : num  1.18e-37 3.93e-24 1.11e-11 4.77e-05 6.33e-11 ...
-##  $ fdr_her2        : num  3.71e-01 4.84e-03 1.41e-03 7.19e-08 1.08e-01 ...
+##  $ fdr_baseline    : num  7.42e-24 3.35e-35 1.21e-02 1.93e-18 2.46e-33 ...
+##  $ fdr_her2        : num  0.09149 0.03739 0.30908 0.00187 0.00271 ...
 ##  $ warnings        : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
 ##  $ errors          : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...</code></pre>
 </div>

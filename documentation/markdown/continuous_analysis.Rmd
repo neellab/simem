@@ -14,11 +14,11 @@ Also note that, while the code below uses relative paths, you should edit these 
 ### To install required packages, uncomment and run this
 # source("http://www.bioconductor.org/biocLite.R")
 # biocLite(c("Biobase", "preprocessCore", "genefilter"))
-# install.packages(c("blme", "doMC", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+# install.packages(c("blme", "doParallel", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
 
 suppressPackageStartupMessages(library("Biobase"))
 suppressPackageStartupMessages(library("blme"))
-suppressPackageStartupMessages(library("doMC"))
+suppressPackageStartupMessages(library("doParallel"))
 suppressPackageStartupMessages(library("genefilter"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("locfit"))
@@ -87,7 +87,7 @@ genesOfInterest = c(595,   #CCND1
 ```
 &nbsp;
 
-If you want to perform a genome-wide analysis, simply omit the `geneIds = genesOfInterest` parameter. As noted, this analysis typically takes ~18 hours but can be greatly reduced using the `parallelNodes` parameter on multi-core Linux or OS X systems.
+If you want to perform a genome-wide analysis, simply omit the `geneIds = genesOfInterest` parameter. As noted, this analysis typically takes ~18 hours but can be greatly reduced using the `parallelNodes` parameter on systems with multiple processor cores.
 
 &nbsp;
 

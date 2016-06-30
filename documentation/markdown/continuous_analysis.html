@@ -119,11 +119,11 @@ $(document).ready(function () {
 <pre class="r"><code>### To install required packages, uncomment and run this
 # source(&quot;http://www.bioconductor.org/biocLite.R&quot;)
 # biocLite(c(&quot;Biobase&quot;, &quot;preprocessCore&quot;, &quot;genefilter&quot;))
-# install.packages(c(&quot;blme&quot;, &quot;doMC&quot;, &quot;ggplot2&quot;, &quot;locfit&quot;, &quot;MASS&quot;, &quot;plyr&quot;, &quot;reshape&quot;))
+# install.packages(c(&quot;blme&quot;, &quot;doParallel&quot;, &quot;ggplot2&quot;, &quot;locfit&quot;, &quot;MASS&quot;, &quot;plyr&quot;, &quot;reshape&quot;))
 
 suppressPackageStartupMessages(library(&quot;Biobase&quot;))
 suppressPackageStartupMessages(library(&quot;blme&quot;))
-suppressPackageStartupMessages(library(&quot;doMC&quot;))
+suppressPackageStartupMessages(library(&quot;doParallel&quot;))
 suppressPackageStartupMessages(library(&quot;genefilter&quot;))
 suppressPackageStartupMessages(library(&quot;ggplot2&quot;))
 suppressPackageStartupMessages(library(&quot;locfit&quot;))
@@ -196,7 +196,7 @@ ccnd1Values[1:5,]</code></pre>
                     1019,  #CDK4
                     1021)  #CDK6</code></pre>
 <p> </p>
-<p>If you want to perform a genome-wide analysis, simply omit the <code>geneIds = genesOfInterest</code> parameter. As noted, this analysis typically takes ~18 hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core Linux or OS X systems.</p>
+<p>If you want to perform a genome-wide analysis, simply omit the <code>geneIds = genesOfInterest</code> parameter. As noted, this analysis typically takes ~18 hours but can be greatly reduced using the <code>parallelNodes</code> parameter on systems with multiple processor cores.</p>
 <p> </p>
 <p>If we specify an analysis using both precision and signal-noise measurement weights (<code>inverseVarianceWeights = TRUE</code> and <code>signalProbWeights = TRUE</code> parameters, respectively), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
 <p> </p>
