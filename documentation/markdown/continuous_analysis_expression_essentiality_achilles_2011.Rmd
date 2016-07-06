@@ -3,7 +3,8 @@ Essentiality associated with continuous expression: Project Achilles (Cheung et 
 
 &nbsp;
 
-First [__DOWNLOAD SIMEM R CODE__](https://github.com/neellab/simem/tree/master/R). 
+First [__DOWNLOAD SIMEM R CODE__](https://github.com/neellab/simem/blob/master/R/simem_code.zip?raw=true) zip bundle containing the R code files loaded below.
+
 &nbsp;
 Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
 

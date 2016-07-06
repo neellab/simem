@@ -111,11 +111,10 @@ $(document).ready(function () {
 </div>
 
 
-<div id="essentiality-associated-with-continuous-expression-project-achilles-cheung-et-al.-2011-per-gene-continuous-expression-vs.essentiality" class="section level2">
-<h2>Essentiality associated with continuous expression: Project Achilles (Cheung et al. 2011) per-gene continuous expression vs. essentiality</h2>
+<div id="class-context-specific-essentiality-project-achilles-cowley-et-al.-2014-ovarian-vs.other-cancers-example" class="section level2">
+<h2>2 class context-specific essentiality: Project Achilles (Cowley et al. 2014) Ovarian vs. Other Cancers example</h2>
 <p> </p>
-<p>First <a href="https://github.com/neellab/simem/blob/master/R/simem_code.zip?raw=true"><strong>DOWNLOAD SIMEM R CODE</strong></a> zip bundle containing the R code files loaded below.</p>
-<p>  Also note that, while the code below uses relative paths, you should edit these to point to where you’ve stored the code, annotation or data files.</p>
+<p>First <a href="https://github.com/neellab/simem/blob/master/R/simem_code.zip?raw=true"><strong>DOWNLOAD SIMEM R CODE</strong></a> zip bundle containing the R code files loaded below.   Also note that, while the code below uses relative paths, you should edit these to point to where you’ve stored the code, annotation or data files.</p>
 <pre class="r"><code>### To install required packages, uncomment and run this
 # source(&quot;http://www.bioconductor.org/biocLite.R&quot;)
 # biocLite(c(&quot;Biobase&quot;, &quot;preprocessCore&quot;, &quot;genefilter&quot;))
@@ -140,48 +139,42 @@ source(&quot;../../R/simem_lib.R&quot;)</code></pre>
 <!---
 achilles_screens_with_weights.eset ExpressionSet is stored on and linked to from Dropbox account, under /github/simem/data/shrna/
 -->
-<p>The Cheung et al. 2011 Project Achilles screen data formatted as an <code>ExpressionSet</code>, including measurement weights, can be downloaded <a href="https://www.dropbox.com/s/qj26t8ymz24bmcl/achilles_screens_with_weights.eset?dl=1"><strong>HERE</strong></a>.</p>
-<pre class="r"><code>load(&quot;../../data/shrna/achilles_screens_with_weights.eset&quot;)
-fdat = fData(achilles_screens)
-pheno = pData(achilles_screens)
+<p>The Cowley et al. 2014 Project Achilles screen data, including over 200 screens from multiple cancer types formatted as an <code>ExpressionSet</code>, and including measurement weights, can be downloaded <a href="https://www.dropbox.com/s/l8v27e2ncpwk7ah/achilles_screens_expanded_with_weights.eset?dl=1"><strong>HERE</strong></a>.</p>
+<p>The Cowley 2014 Achilles study contains all the screens published in the Cheung 2011 Achilles study, but is measured using sequencing rather than microarrays as was the case for Cheung 2011.</p>
+<pre class="r"><code>load(&quot;../../data/shrna/achilles_screens_expanded_with_weights.eset&quot;)
+fdat = fData(achilles_screens_expanded)
+pheno = pData(achilles_screens_expanded)
 
-achilles_screens</code></pre>
+achilles_screens_expanded</code></pre>
 <pre><code>## ExpressionSet (storageMode: lockedEnvironment)
-## assayData: 54020 features, 389 samples 
-##   element names: exprs, groupMeans, varWeights 
+## assayData: 50986 features, 799 samples 
+##   element names: exprs, groupMeans, groupVars, varWeights 
 ## protocolData: none
 ## phenoData
-##   sampleNames: 786o_a 786o_b ... u251mg_d (389 total)
-##   varLabels: sample_id cell_line ... replicate_group (7 total)
+##   sampleNames: 22rv1_a 22rv1_b ... zr7530_d (799 total)
+##   varLabels: cell_line sample_id ... replicate_group (22 total)
 ##   varMetadata: labelDescription
 ## featureData
-##   featureNames: TRCN0000072178cA_st TRCN0000072178cB_st ...
-##     TRCN0000116697m_st (54020 total)
-##   fvarLabels: probeset_id symbol gene_id description
+##   featureNames: AAAAATGGCATCAACCACCAT AAAAGGATAACCCAGGTGTTT ...
+##     TTTGTGACTACGGGAAGGCTC (50986 total)
+##   fvarLabels: reagent symbol gene_id
 ##   fvarMetadata: labelDescription
 ## experimentData: use 'experimentData(object)'
 ## Annotation:</code></pre>
 <p> </p>
-<p>Project Achilles screens were performed using a pool of ~54000 hairpins/reagents mapping to ~12000 genes. The reagent annotation table we’ll load, including the <code>weight</code> column which will be used to exclude some reagents, can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/annotations/achilles_hairpin_annotations.txt.zip?raw=true"><strong>HERE</strong></a>. In this case, any reagents with a mean intensity measurement below 5 (on the log2 scale) in the universal T0 sample are excluded in the analysis. Furthermore, the shRNA reagents in the Achilles screens are identified using the <code>probeset_id</code> column. We’ll specify later how to alter the <code>simem()</code> function to recognize this fact, since by default <code>simem()</code> assumes reagents identified by a <code>trcn_id</code> column.</p>
-<pre class="r"><code>hp = read.delim(&quot;../../data/annotations/achilles_hairpin_annotations.txt&quot;, header=T, as.is=T, check.names=F)
-hpWeights = hp[,c(&quot;probeset_id&quot;, &quot;gene_id&quot;, &quot;weight&quot;)]</code></pre>
+<p>Project Achilles screens were performed using a pool of 50000+ hairpins/reagents mapping to ~12000 genes. While for the Cheung 2011 study, we specifically excluded reagents with low abundance in the universal sample and included this information in a reagent information table, we have not performed this filtering yet for the Cowley 2014 data.</p>
+<p>Furthermore, the shRNA reagents in the Cowley 2014 Achilles screens are identified directly by their unique nucleotide sequence, which is specified in the <code>reagent</code> column. This differs from the Cheung 2011 study, which identified reagents using a unique identifier specified in the <code>probeset_id</code> column. Furthermore, while the sequences for shRNAs included in the Cheung 2011 and Cowley 2014 studies largely overlap, there are still thousands of reagents with sequences specific to each study. We make no attempt here to reconcile these reagent differences.</p>
+<p>As noted in other Achilles examples, by default the <code>simem()</code> function assumes shRNA/CRISPR reagents identified by a <code>trcn_id</code> column. We’ll specify below how to alter the <code>simem()</code> function to recognize the <code>reagent</code> as the column specifying the unique reagent identifier (the nucleotide sequence) for the Cowley 2014 data.</p>
+<p>We’ve also included the extensive cell line/screen annotations (including cancer type, subtype, QC, etc…) available for the Cowley 2014 data in the <code>achilles_screens_expanded</code> <code>ExpressionSet</code> loaded above. We’ll extract the cancer type information to be used in the analysis.</p>
+<pre class="r"><code>cancerTypes = unique(pheno[,c(&quot;cell_line&quot;, &quot;type&quot;)])
+cancerTypes$tissue = ifelse(cancerTypes$type == &quot;ovarian&quot;, &quot;ovarian&quot;, &quot;other&quot;)
+# Remove the types column, since it also exists in the phenoData annotations of the Achilles annotations
+cancerTypes = cancerTypes[,-2]</code></pre>
 <p> </p>
-<p>The formatted CCLE microarray-based expression data for these genes can be downloaded <a href="https://github.com/neellab/simem/blob/master/data/expression/ccle_achilles_expression.txt.zip?raw=true"><strong>HERE</strong></a>.</p>
-<pre class="r"><code>expr = read.delim(&quot;../../data/expression/ccle_achilles_expression.txt&quot;, header=T, as.is=T, check.names=F)
-
-# Perform the analysis for ids contained in both the expression matrix and the shRNA data.
-commonIds = intersect(expr$gene_id, fdat$gene_id)
-
-# Subset the shRNA data to only include the Achilles screens profiled by CCLE expressions
-samplesToInclude = which(pheno$cell_line %in% colnames(expr))
-achilles = achilles_screens[,samplesToInclude]</code></pre>
-<p> </p>
-<p>When we want to specify a different set of covariate values (such as expression) for each gene, we do not specify the <code>covariate</code> and <code>annotationsPerCellLine</code> input parameters for the <code>simem()</code> function. These two parameters are used only when the same covariate values (such as cancer subtype) apply to all genes. Instead, we’ll specify the <code>annotationsPerId = expr</code> input parameter. In order for the <code>expr</code> data frame to be properly formatted, the first column of <code>expr</code> needs to be <code>gene_id</code>, containing the integer Entrez gene ids. The second and subsequent columns need to be screen/cell line names.</p>
+<p>Analogously with the Marcotte 2016 HER2+ analysis example, we specify the <code>covariate=&quot;tissue&quot;</code> and <code>annotationsPerCellLine=cancerTypes</code> input parameters for the <code>simem()</code> function.</p>
 <p>For the purposes of this example, to reduce computation time, we’ll specify a few known oncogenes whose essentiality increases with expression.</p>
-<pre class="r"><code>testIds = c(598, #BCL2L1
-            3845, #KRAS
-            7849, #PAX8
-            6663 #SOX10
+<pre class="r"><code>testIds = c(7849, #PAX8
+            6656 #SOX1
 )</code></pre>
 <p> </p>
 <p>By default, the <code>simem()</code> function assumes that columns identifying gene ids, symbols, reagent ids, cell lines, replicates and time-points are specified in the screen data <code>ExpressionSet</code>. The default column names assumed by the <code>simem()</code> function are obtained using <code>getDefaultVariableMap()</code>:</p>
@@ -199,32 +192,34 @@ achilles = achilles_screens[,samplesToInclude]</code></pre>
 ## screenId         &quot;screen_id&quot;      
 ## replicateGroupId &quot;replicate_group&quot;</code></pre>
 <p> </p>
-<p>As noted, the Achilles reagents are identified using the <code>fdat$probeset_id</code> column. We’ll specify this in the <code>simem()</code> function by adding a <code>variableMap=vars</code> input parameter, as follows:</p>
+<p>As noted, the Cowley 2014 Achilles reagents are identified using the <code>fdat$reagent</code> column. We’ll specify this in the <code>simem()</code> function by adding a <code>variableMap=vars</code> input parameter, as follows:</p>
 <pre class="r"><code>vars = getDefaultVariableMap()
-vars$reagentId = &quot;probeset_id&quot;
-vars$timeNum = &quot;timeNum&quot;
-vars$timeGroup = &quot;timepointIndex&quot;</code></pre>
+vars$reagentId = &quot;reagent&quot;
+# These values currently need to be specified, but are not used in the single time-point Achilles analysis
+# The need for these will hopefully be removed in the case of single time-point analyses in a future update
+vars$timeNum = &quot;cell_doublings&quot;
+vars$timeGroup = &quot;doubling_time_hrs&quot;</code></pre>
 <p> </p>
-<p>If you want to perform a genome-wide analysis, simply specify the <code>geneIds = commonIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core Linux or OS X systems.</p>
+<p>If you want to perform a genome-wide analysis, simply specify the <code>geneIds = testIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core systems using functionality available through the <code>doParallel</code> R package.</p>
 <p> </p>
-<p>Since the Achilles data is an end-point assay, we must specify the <code>endPoint=TRUE</code> parameter for the <code>simem()</code> function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (<code>inverseVarianceWeights = TRUE</code>), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
+<p>Since the Cowley 2014 Achilles data is an end-point assay, we must specify the <code>endPoint=TRUE</code> parameter for the <code>simem()</code> function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (<code>inverseVarianceWeights = TRUE</code>), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>). These weights are already present in the <code>achilles_screens_expanded</code> <code>ExpressionSet</code> linked to/loaded at the beginning of this tutorial.</p>
 <p> </p>
-<p>We’re now ready to predict genes whose essentiality is significantly associated with expression.</p>
-<pre class="r"><code>results = simem(achilles,
+<p>We’re now ready to predict genes whose essentiality is significantly different in Ovarian screens.</p>
+<pre class="r"><code>results = simem(achilles_screens_expanded,
                geneIds=testIds,
-               reagentWeights=hpWeights,
-               annotationsPerId=expr, 
+               covariate=&quot;tissue&quot;,
+               annotationsPerCellLine=cancerTypes, 
                analyzeReagents=TRUE,
                inverseVarianceWeights=TRUE,
                endPoint=TRUE,
                parallelNodes=1,
                variableMap=vars)</code></pre>
 <p> </p>
-<p>For illustration purposes, we’ll rerun the same code using multiple (2) parallel nodes.</p>
-<pre class="r"><code>results = simem(achilles,
+<p>For illustration purposes, we’ll rerun the same code using multiple (2) parallel nodes (yes, one gene per node).</p>
+<pre class="r"><code>results = simem(achilles_screens_expanded,
                geneIds=testIds,
-               reagentWeights=hpWeights,
-               annotationsPerId=expr, 
+               covariate=&quot;tissue&quot;,
+               annotationsPerCellLine=cancerTypes, 
                analyzeReagents=TRUE,
                inverseVarianceWeights=TRUE,
                endPoint=TRUE,
@@ -244,45 +239,27 @@ vars$timeGroup = &quot;timepointIndex&quot;</code></pre>
 ##   fun(result.1, result.2)
 ## returning status TRUE</code></pre>
 <p> </p>
-<p>Here are the gene-level summaries (more detailed gene-level results can be obtained using <code>results$gene_detailed</code>). The <code>difference</code> parameter can be interpreted as the magnitude of the average change in dropout slope associated with each unit increase in the gene’s log2 microarray intensity value. In other words, on average the dropout is faster (more negative), indicating increased essentiality, in cell lines with higher expression.</p>
-<pre class="r"><code>options(width=100)
+<p>Here are the gene-level summaries (more detailed gene-level results can be obtained using <code>results$gene_detailed</code>). The <code>difference</code> parameter can be interpreted as the log2 measurement difference in Ovarian (compared to Other Cancers). A negative value indicates more dropout/essentiality in Ovarian, while a positive value indicates less essentiality in Ovarian.</p>
+<pre class="r"><code>options(width=120)
 
 results$gene</code></pre>
-<pre><code>##   gene_id symbol  difference       pvalue          fdr warnings errors
-## 1     598 BCL2L1 -0.45103977 1.140391e-10 2.280781e-10                
-## 2    3845   KRAS -0.22064620 6.397026e-08 8.529368e-08                
-## 3    6663  SOX10 -0.46751461 1.098756e-11 4.395024e-11                
-## 4    7849   PAX8 -0.09270574 2.590732e-06 2.590732e-06</code></pre>
+<pre><code>##   gene_id symbol difference_ovarian pvalue_ovarian  fdr_ovarian warnings errors
+## 1    7849   PAX8         -0.5302633   1.883183e-08 3.766366e-08                
+## 2    6656   SOX1         -0.5658423   8.210383e-06 8.210383e-06</code></pre>
 <p> </p>
 <p>Since <code>analyzeReagents = TRUE</code> parameter was specified, per-reagent context-specific essentiality predictions are also available (more detailed gene-level results can be obtained using <code>results$reagent_detailed</code>)</p>
-<pre class="r"><code>options(width=100)
+<pre class="r"><code>options(width=120)
 reagent = results$reagent
-reagent[order(reagent$symbol, reagent$probeset_id), ]</code></pre>
-<pre><code>##           probeset_id gene_id symbol   difference       pvalue          fdr warnings errors
-## 7  TRCN0000033499m_st     598 BCL2L1 -1.084601359 1.328498e-07 7.970986e-07                
-## 8  TRCN0000033500m_st     598 BCL2L1 -0.570923603 2.085288e-05 1.000938e-04                
-## 9  TRCN0000033501m_st     598 BCL2L1 -0.225331047 8.695563e-02 1.739113e-01                
-## 10 TRCN0000033502m_st     598 BCL2L1 -0.253058519 1.634092e-01 2.385993e-01                
-## 11 TRCN0000033503m_st     598 BCL2L1 -0.127568563 1.417070e-01 2.267312e-01                
-## 1  TRCN0000010369m_st    3845   KRAS -0.182540262 5.705246e-02 1.244781e-01                
-## 2  TRCN0000018337m_st    3845   KRAS -0.101807686 1.234060e-01 2.115532e-01                
-## 3  TRCN0000033259m_st    3845   KRAS -0.704177541 9.220785e-09 7.376628e-08                
-## 4  TRCN0000033260m_st    3845   KRAS -0.389424485 3.798133e-03 1.139440e-02                
-## 5  TRCN0000033261m_st    3845   KRAS -0.069402072 4.609164e-01 5.530996e-01                
-## 6  TRCN0000033263m_st    3845   KRAS  0.006208942 9.613397e-01 9.613397e-01                
-## 12 TRCN0000040150m_st    3845   KRAS -0.129222825 1.690078e-01 2.385993e-01                
-## 13 TRCN0000040151m_st    3845   KRAS  0.048893350 7.293661e-01 7.610777e-01                
-## 14 TRCN0000040152m_st    3845   KRAS -0.449105840 1.390005e-02 3.706681e-02                
-## 20 TRCN0000021274m_st    7849   PAX8 -0.089940851 4.842104e-02 1.162105e-01                
-## 21 TRCN0000021275m_st    7849   PAX8  0.040427702 2.591113e-01 3.454817e-01                
-## 22 TRCN0000021276m_st    7849   PAX8 -0.020082596 5.432624e-01 6.159332e-01                
-## 23 TRCN0000021277m_st    7849   PAX8 -0.058332023 1.200286e-01 2.115532e-01                
-## 24 TRCN0000021278m_st    7849   PAX8 -0.335958596 2.230537e-10 2.676644e-09                
-## 15 TRCN0000018984m_st    6663  SOX10 -1.126964461 6.338370e-14 1.521209e-12                
-## 16 TRCN0000018985m_st    6663  SOX10 -0.435469574 2.512846e-04 9.216024e-04                
-## 17 TRCN0000018986m_st    6663  SOX10 -0.078974328 5.646055e-01 6.159332e-01                
-## 18 TRCN0000018987m_st    6663  SOX10 -0.120424704 4.226760e-01 5.339065e-01                
-## 19 TRCN0000018988m_st    6663  SOX10 -0.693519719 2.688007e-04 9.216024e-04</code></pre>
+reagent[order(reagent$symbol, reagent$reagent), ]</code></pre>
+<pre><code>##                 reagent gene_id symbol difference_ovarian pvalue_ovarian  fdr_ovarian warnings errors
+## 1 CCCAGTGTCAGCTCCATTAAT    7849   PAX8         -0.4660553   3.171645e-02 6.343289e-02                
+## 2 CCGACTAAGCATTGACTCACA    7849   PAX8         -1.2582402   4.502977e-06 2.444116e-05                
+## 3 CCTTCGCCATAAAGCAGGAAA    7849   PAX8         -0.3110906   8.120610e-02 1.082748e-01                
+## 4 CTCTTTATCTAGCTCCGCCTT    7849   PAX8         -0.2248674   1.454872e-01 1.662711e-01                
+## 5 GCAACCATTCAACCTCCCTAT    7849   PAX8         -0.3777883   5.808373e-02 9.293396e-02                
+## 6 CATCTCCAACTCGCAGGGCTA    6656   SOX1         -0.4767102   1.049589e-02 2.798905e-02                
+## 7 GCCAACCAGGACCGGGTCAAA    6656   SOX1         -0.1205118   5.870765e-01 5.870765e-01                
+## 8 GCGGAGTTATATTCTGGGTTT    6656   SOX1         -1.0898745   6.110289e-06 2.444116e-05</code></pre>
 </div>
 
 
