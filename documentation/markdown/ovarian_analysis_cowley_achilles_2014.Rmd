@@ -1,0 +1,158 @@
+2 class context-specific essentiality: Project Achilles (Cowley et al. 2014) Ovarian vs. Other Cancers example
+-------------------------------------------------------------
+
+&nbsp;
+
+First [__DOWNLOAD SIMEM R CODE__](https://github.com/neellab/simem/blob/master/R/simem_code.zip?raw=true) zip bundle containing the R code files loaded below. 
+&nbsp;
+Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
+
+```{r load_code}
+
+### To install required packages, uncomment and run this
+# source("http://www.bioconductor.org/biocLite.R")
+# biocLite(c("Biobase", "preprocessCore", "genefilter"))
+# install.packages(c("blme", "doParallel", "ggplot2", "locfit", "MASS", "plyr", "reshape"))
+
+suppressPackageStartupMessages(library("Biobase"))
+suppressPackageStartupMessages(library("blme"))
+suppressPackageStartupMessages(library("doParallel"))
+suppressPackageStartupMessages(library("genefilter"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("locfit"))
+suppressPackageStartupMessages(library("MASS"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("preprocessCore"))
+suppressPackageStartupMessages(library("reshape"))
+
+
+source("../../R/data_format_lib.R")
+source("../../R/model_lib.R")
+source("../../R/simem_lib.R")
+```
+&nbsp;
+
+<!---
+achilles_screens_with_weights.eset ExpressionSet is stored on and linked to from Dropbox account, under /github/simem/data/shrna/
+-->
+The Cowley et al. 2014 Project Achilles screen data, including over 200 screens from multiple cancer types formatted as an `ExpressionSet`, and including measurement weights, can be downloaded [__HERE__](https://www.dropbox.com/s/l8v27e2ncpwk7ah/achilles_screens_expanded_with_weights.eset?dl=1).
+
+The Cowley 2014 Achilles study contains all the screens published in the Cheung 2011 Achilles study, but is measured using sequencing rather than microarrays as was the case for Cheung 2011.
+
+```{r load_screen_data}
+
+load("../../data/shrna/achilles_screens_expanded_with_weights.eset")
+fdat = fData(achilles_screens_expanded)
+pheno = pData(achilles_screens_expanded)
+
+achilles_screens_expanded
+```
+&nbsp;
+
+Project Achilles screens were performed using a pool of 50000+ hairpins/reagents mapping to ~12000 genes. While for the Cheung 2011 study, we specifically excluded reagents with low abundance in the universal sample and included this information in a reagent information table, we have not performed this filtering yet for the Cowley 2014 data.
+
+Furthermore, the shRNA reagents in the Cowley 2014 Achilles screens are identified directly by their unique nucleotide sequence, which is specified in the `reagent` column. This differs from the Cheung 2011 study, which identified reagents using a unique identifier specified in the `probeset_id` column. Furthermore, while the sequences for shRNAs included in the Cheung 2011 and Cowley 2014 studies largely overlap, there are still thousands of reagents with sequences specific to each study. We make no attempt here to reconcile these reagent differences.
+
+As noted in other Achilles examples, by default the `simem()` function assumes shRNA/CRISPR reagents identified by a `trcn_id` column. We'll specify below how to alter the `simem()` function to recognize the `reagent` as the column specifying the unique reagent identifier (the nucleotide sequence) for the Cowley 2014 data.
+
+We've also included the extensive cell line/screen annotations (including cancer type, subtype, QC, etc...) available for the Cowley 2014 data in the `achilles_screens_expanded` `ExpressionSet` loaded above. We'll extract the cancer type information to be used in the analysis.
+
+```{r load_annotations}
+
+cancerTypes = unique(pheno[,c("cell_line", "type")])
+cancerTypes$tissue = ifelse(cancerTypes$type == "ovarian", "ovarian", "other")
+# Remove the types column, since it also exists in the phenoData annotations of the Achilles annotations
+cancerTypes = cancerTypes[,-2]
+
+```
+&nbsp;
+
+Analogously with the Marcotte 2016 HER2+ analysis example, we specify the `covariate="tissue"` and `annotationsPerCellLine=cancerTypes` input parameters for the `simem()` function.
+
+For the purposes of this example, to reduce computation time, we'll specify a few known oncogenes whose essentiality increases with expression.
+
+```{r specify_ids}
+testIds = c(7849, #PAX8
+            6656 #SOX1
+)
+```
+&nbsp;
+
+By default, the `simem()` function assumes that columns identifying gene ids, symbols, reagent ids, cell lines, replicates and time-points are specified in the screen data `ExpressionSet`. The default column names assumed by the `simem()` function are obtained using `getDefaultVariableMap()`:
+
+```{r get_variables} 
+t(getDefaultVariableMap())
+```
+&nbsp;
+
+As noted, the Cowley 2014 Achilles reagents are identified using the `fdat$reagent` column. We'll specify this in the `simem()` function by adding a `variableMap=vars` input parameter, as follows:
+
+```{r specify_variables}
+
+vars = getDefaultVariableMap()
+vars$reagentId = "reagent"
+# These values currently need to be specified, but are not used in the single time-point Achilles analysis
+# The need for these will hopefully be removed in the case of single time-point analyses in a future update
+vars$timeNum = "cell_doublings"
+vars$timeGroup = "doubling_time_hrs"
+```
+&nbsp;
+
+If you want to perform a genome-wide analysis, simply specify the `geneIds = testIds` parameter. This analysis typically takes several hours but can be greatly reduced using the `parallelNodes` parameter on multi-core systems using functionality available through the `doParallel` R package.
+
+&nbsp;
+
+Since the Cowley 2014 Achilles data is an end-point assay, we must specify the `endPoint=TRUE` parameter for the `simem()` function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (`inverseVarianceWeights = TRUE`), we must ensure that we've added these weights to the `ExpressionSet` beforehand ([__DETAILED HERE__](https://neellab.github.io/simem/documentation/markdown/weights_precision.html)). These weights are already present in the `achilles_screens_expanded` `ExpressionSet` linked to/loaded at the beginning of this tutorial.
+
+&nbsp;
+
+We're now ready to predict genes whose essentiality is significantly different in Ovarian screens.
+
+```{r simem}
+
+
+results = simem(achilles_screens_expanded,
+               geneIds=testIds,
+               covariate="tissue",
+               annotationsPerCellLine=cancerTypes, 
+               analyzeReagents=TRUE,
+               inverseVarianceWeights=TRUE,
+               endPoint=TRUE,
+               parallelNodes=1,
+               variableMap=vars)
+```
+&nbsp;
+
+For illustration purposes, we'll rerun the same code using multiple (2) parallel nodes (yes, one gene per node).
+
+```{r simem_parallel}
+
+results = simem(achilles_screens_expanded,
+               geneIds=testIds,
+               covariate="tissue",
+               annotationsPerCellLine=cancerTypes, 
+               analyzeReagents=TRUE,
+               inverseVarianceWeights=TRUE,
+               endPoint=TRUE,
+               parallelNodes=2,
+               variableMap=vars)
+```
+&nbsp;
+
+
+Here are the gene-level summaries (more detailed gene-level results can be obtained using `results$gene_detailed`). The `difference` parameter can be interpreted as the log2 measurement difference in Ovarian (compared to Other Cancers). A negative value indicates more dropout/essentiality in Ovarian, while a positive value indicates less essentiality in Ovarian.
+
+```{r show_gene}
+options(width=120)
+
+results$gene
+```
+&nbsp;
+
+Since `analyzeReagents = TRUE` parameter was specified, per-reagent context-specific essentiality predictions are also available (more detailed gene-level results can be obtained using `results$reagent_detailed`)
+
+```{r show_reagent}
+options(width=120)
+reagent = results$reagent
+reagent[order(reagent$symbol, reagent$reagent), ]
+```

@@ -5,7 +5,8 @@ Essentiality with continuous expression: Breast CCND1 expression example
 
 We previously worked through a basic 2 class differential essentiality analysis using cell line HER2+ status as an example. Here we see how to predict genes whose essentiality is associated (positively or negatively) with a continuous variable, such as RNA-Seq expression of a gene. We'll use the expression of well-known Breast oncogene CCND1 as a case study.
 
-First [__DOWNLOAD THE SIMEM R CODE__](https://github.com/neellab/simem/tree/master/R). 
+First [__DOWNLOAD SIMEM R CODE__](https://github.com/neellab/simem/blob/master/R/simem_code.zip?raw=true) zip bundle containing the R code files loaded below.
+
 &nbsp;
 Also note that, while the code below uses relative paths, you should edit these to point to where you've stored the code, annotation or data files.
 
