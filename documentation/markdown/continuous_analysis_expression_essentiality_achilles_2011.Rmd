@@ -3,6 +3,10 @@ Essentiality associated with continuous expression: Project Achilles (Cheung et 
 
 &nbsp;
 
+[__DOWNLOAD R CODE FILE FOR THIS TUTORIAL__](https://github.com/neellab/simem/blob/master/documentation/markdown/tutorial_R/cheung_achilles_continuous_expression_essentiality.R?raw=true)
+
+&nbsp;
+
 First [__DOWNLOAD SIMEM R CODE__](https://github.com/neellab/simem/blob/master/R/simem_code.zip?raw=true) zip bundle containing the R code files loaded below.
 
 &nbsp;
