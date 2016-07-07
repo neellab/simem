@@ -3,6 +3,10 @@
 
 &nbsp;
 
+[__DOWNLOAD R CODE FILE FOR THIS TUTORIAL__](https://github.com/neellab/simem/blob/master/documentation/markdown/tutorial_R/marcotte_her2_two_class_analysis.R?raw=true)
+
+&nbsp;
+
 First [__DOWNLOAD SIMEM R CODE__](https://github.com/neellab/simem/blob/master/R/simem_code.zip?raw=true) zip bundle containing the R code files loaded below.
 
 &nbsp;
