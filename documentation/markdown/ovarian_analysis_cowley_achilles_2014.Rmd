@@ -102,7 +102,7 @@ vars$timeGroup = "doubling_time_hrs"
 ```
 &nbsp;
 
-If you want to perform a genome-wide analysis, simply specify the `geneIds = testIds` parameter. This analysis typically takes several hours but can be greatly reduced using the `parallelNodes` parameter on multi-core systems using functionality available through the `doParallel` R package.
+If you want to perform a genome-wide analysis, simply omit the `geneIds = testIds` parameter. This analysis typically takes several hours but can be greatly reduced using the `parallelNodes` parameter on multi-core systems using functionality available through the `doParallel` R package.
 
 &nbsp;
 

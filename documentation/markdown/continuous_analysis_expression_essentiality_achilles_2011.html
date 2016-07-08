@@ -207,7 +207,7 @@ vars$reagentId = &quot;probeset_id&quot;
 vars$timeNum = &quot;timeNum&quot;
 vars$timeGroup = &quot;timepointIndex&quot;</code></pre>
 <p> </p>
-<p>If you want to perform a genome-wide analysis, simply specify the <code>geneIds = commonIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core Linux or OS X systems.</p>
+<p>If you want to perform a genome-wide analysis, simply omit the <code>geneIds = commonIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core Linux or OS X systems.</p>
 <p> </p>
 <p>Since the Achilles data is an end-point assay, we must specify the <code>endPoint=TRUE</code> parameter for the <code>simem()</code> function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (<code>inverseVarianceWeights = TRUE</code>), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>).</p>
 <p> </p>

@@ -107,7 +107,7 @@ vars$timeGroup = "timepointIndex"
 ```
 &nbsp;
 
-If you want to perform a genome-wide analysis, simply specify the `geneIds = commonIds` parameter. This analysis typically takes several hours but can be greatly reduced using the `parallelNodes` parameter on multi-core Linux or OS X systems.
+If you want to perform a genome-wide analysis, simply omit the `geneIds = commonIds` parameter. This analysis typically takes several hours but can be greatly reduced using the `parallelNodes` parameter on multi-core Linux or OS X systems.
 
 &nbsp;
 
