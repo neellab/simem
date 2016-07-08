@@ -202,7 +202,7 @@ vars$reagentId = &quot;reagent&quot;
 vars$timeNum = &quot;cell_doublings&quot;
 vars$timeGroup = &quot;doubling_time_hrs&quot;</code></pre>
 <p> </p>
-<p>If you want to perform a genome-wide analysis, simply specify the <code>geneIds = testIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core systems using functionality available through the <code>doParallel</code> R package.</p>
+<p>If you want to perform a genome-wide analysis, simply omit the <code>geneIds = testIds</code> parameter. This analysis typically takes several hours but can be greatly reduced using the <code>parallelNodes</code> parameter on multi-core systems using functionality available through the <code>doParallel</code> R package.</p>
 <p> </p>
 <p>Since the Cowley 2014 Achilles data is an end-point assay, we must specify the <code>endPoint=TRUE</code> parameter for the <code>simem()</code> function. Furthermore, signal-noise measurement weights do not apply to this analysis case. To specify an analysis using precision weights (<code>inverseVarianceWeights = TRUE</code>), we must ensure that we’ve added these weights to the <code>ExpressionSet</code> beforehand (<a href="https://neellab.github.io/simem/documentation/markdown/weights_precision.html"><strong>DETAILED HERE</strong></a>). These weights are already present in the <code>achilles_screens_expanded</code> <code>ExpressionSet</code> linked to/loaded at the beginning of this tutorial.</p>
 <p> </p>
